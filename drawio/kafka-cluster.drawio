@@ -1,0 +1,109 @@
+<mxfile host="65bd71144e">
+    <diagram name="Page-1" id="VRGYmoF9sdT095P-46xx">
+        <mxGraphModel dx="1916" dy="2840" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-38" value="" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=#0E0C0E;strokeWidth=3;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;fontStyle=1;fillColor=#F8EBFF;" parent="1" vertex="1">
+                    <mxGeometry x="-780" y="-1900" width="2160" height="870" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-16" style="edgeStyle=orthogonalEdgeStyle;shape=link;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeColor=default;strokeWidth=3;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;fontColor=default;fontStyle=1;labelBackgroundColor=default;endArrow=classic;" parent="1" source="Wdqpl3CdpJsHmuXEMJ47-15" target="Wdqpl3CdpJsHmuXEMJ47-14" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-15" value="" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=16;strokeWidth=3;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" parent="1" vertex="1">
+                    <mxGeometry x="-710" y="-1430" width="2010" height="150" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-14" value="" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=16;strokeWidth=3;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" parent="1" vertex="1">
+                    <mxGeometry x="-710" y="-1770" width="2010" height="150" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;" parent="1" source="Wdqpl3CdpJsHmuXEMJ47-2" target="Wdqpl3CdpJsHmuXEMJ47-3" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-37" style="edgeStyle=orthogonalEdgeStyle;shape=link;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=default;strokeWidth=3;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;fontColor=default;fontStyle=1;labelBackgroundColor=default;endArrow=classic;" parent="1" source="Wdqpl3CdpJsHmuXEMJ47-2" target="Wdqpl3CdpJsHmuXEMJ47-35" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-2" value="KAFKA TOPOLOGY SETUP" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=16;strokeWidth=3;" parent="1" vertex="1">
+                    <mxGeometry y="-2040" width="590" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-8" style="edgeStyle=orthogonalEdgeStyle;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=default;strokeWidth=3;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;fontColor=default;fontStyle=1;labelBackgroundColor=default;endArrow=classic;" parent="1" source="Wdqpl3CdpJsHmuXEMJ47-3" target="Wdqpl3CdpJsHmuXEMJ47-7" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-9" style="edgeStyle=orthogonalEdgeStyle;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=default;strokeWidth=3;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;fontColor=default;fontStyle=1;labelBackgroundColor=default;endArrow=classic;" parent="1" source="Wdqpl3CdpJsHmuXEMJ47-3" target="Wdqpl3CdpJsHmuXEMJ47-6" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-10" style="edgeStyle=orthogonalEdgeStyle;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=default;strokeWidth=3;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;fontColor=default;fontStyle=1;labelBackgroundColor=default;endArrow=classic;" parent="1" source="Wdqpl3CdpJsHmuXEMJ47-3" target="Wdqpl3CdpJsHmuXEMJ47-5" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-3" value="DOCKER COMPOSE: KRAFT CLUSTER" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=16;strokeWidth=3;fillColor=#d80073;strokeColor=#A50040;fontColor=#ffffff;" parent="1" vertex="1">
+                    <mxGeometry y="-1840" width="590" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-24" style="edgeStyle=orthogonalEdgeStyle;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=default;strokeWidth=3;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;fontColor=default;fontStyle=1;labelBackgroundColor=default;endArrow=classic;" parent="1" source="Wdqpl3CdpJsHmuXEMJ47-5" target="Wdqpl3CdpJsHmuXEMJ47-17" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-5" value="&lt;font style=&quot;color: rgb(255, 255, 255);&quot;&gt;KAFKA CONTROLLER 1&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(255, 255, 255);&quot;&gt;KAFKA NODE ID 1&lt;/font&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=16;strokeWidth=3;fillColor=#60a917;fontColor=#FFFFFF;strokeColor=#2D7600;" parent="1" vertex="1">
+                    <mxGeometry x="-670" y="-1720" width="590" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-23" style="edgeStyle=orthogonalEdgeStyle;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=default;strokeWidth=3;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;fontColor=default;fontStyle=1;labelBackgroundColor=default;endArrow=classic;" parent="1" source="Wdqpl3CdpJsHmuXEMJ47-6" target="Wdqpl3CdpJsHmuXEMJ47-18" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-6" value="KAFKA CONTROLLER 2&lt;br&gt;KAFKA NODE ID 2" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=16;strokeWidth=3;fillColor=#60a917;fontColor=#ffffff;strokeColor=#2D7600;" parent="1" vertex="1">
+                    <mxGeometry y="-1720" width="590" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-22" style="edgeStyle=orthogonalEdgeStyle;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=default;strokeWidth=3;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;fontColor=default;fontStyle=1;labelBackgroundColor=default;endArrow=classic;" parent="1" source="Wdqpl3CdpJsHmuXEMJ47-7" target="Wdqpl3CdpJsHmuXEMJ47-19" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-7" value="KAFKA CONTROLLER 3&lt;br&gt;KAFKA NODE ID 3" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=16;strokeWidth=3;fillColor=#60a917;fontColor=#ffffff;strokeColor=#2D7600;" parent="1" vertex="1">
+                    <mxGeometry x="670" y="-1720" width="590" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-30" style="edgeStyle=orthogonalEdgeStyle;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=default;strokeWidth=3;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;fontColor=default;fontStyle=1;labelBackgroundColor=default;endArrow=classic;" parent="1" source="Wdqpl3CdpJsHmuXEMJ47-11" target="Wdqpl3CdpJsHmuXEMJ47-25" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-11" value="KAFKA BROKER 1&lt;br&gt;KAFKA NODE ID 4" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=16;strokeWidth=3;fillColor=#1ba1e2;fontColor=#ffffff;strokeColor=#006EAF;" parent="1" vertex="1">
+                    <mxGeometry x="-670" y="-1380" width="590" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-28" style="edgeStyle=orthogonalEdgeStyle;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=default;strokeWidth=3;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;fontColor=default;fontStyle=1;labelBackgroundColor=default;endArrow=classic;" parent="1" source="Wdqpl3CdpJsHmuXEMJ47-12" target="Wdqpl3CdpJsHmuXEMJ47-26" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-12" value="KAFKA BROKER 2&lt;br&gt;KAFKA NODE ID 5" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=16;strokeWidth=3;fillColor=#1ba1e2;fontColor=#ffffff;strokeColor=#006EAF;" parent="1" vertex="1">
+                    <mxGeometry y="-1380" width="590" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-29" style="edgeStyle=orthogonalEdgeStyle;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=default;strokeWidth=3;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;fontColor=default;fontStyle=1;labelBackgroundColor=default;endArrow=classic;" parent="1" source="Wdqpl3CdpJsHmuXEMJ47-13" target="Wdqpl3CdpJsHmuXEMJ47-27" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-13" value="KAFKA BROKER 3&lt;br&gt;KAFKA NODE ID 6" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=16;strokeWidth=3;fillColor=#1ba1e2;fontColor=#ffffff;strokeColor=#006EAF;" parent="1" vertex="1">
+                    <mxGeometry x="670" y="-1380" width="590" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-17" value="VOLUME" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=default;strokeWidth=3;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;fontColor=default;fontStyle=1;fillColor=default;" parent="1" vertex="1">
+                    <mxGeometry x="-475" y="-1600" width="200" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-18" value="VOLUME" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=default;strokeWidth=3;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;fontColor=default;fontStyle=1;fillColor=default;" parent="1" vertex="1">
+                    <mxGeometry x="48" y="-1600" width="200" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-19" value="VOLUME" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=default;strokeWidth=3;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;fontColor=default;fontStyle=1;fillColor=default;" parent="1" vertex="1">
+                    <mxGeometry x="865" y="-1600" width="200" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-25" value="VOLUME" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=default;strokeWidth=3;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;fontColor=default;fontStyle=1;fillColor=default;" parent="1" vertex="1">
+                    <mxGeometry x="-475" y="-1260" width="200" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-26" value="VOLUME" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=default;strokeWidth=3;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;fontColor=default;fontStyle=1;fillColor=default;" parent="1" vertex="1">
+                    <mxGeometry x="195" y="-1260" width="200" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-27" value="VOLUME" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=default;strokeWidth=3;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;fontColor=default;fontStyle=1;fillColor=default;" parent="1" vertex="1">
+                    <mxGeometry x="865" y="-1260" width="200" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-31" value="Communication channel: CONTROLLER" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=default;strokeWidth=3;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;fontColor=default;fontStyle=1;fillColor=default;" parent="1" vertex="1">
+                    <mxGeometry x="-710" y="-2050" width="380" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-33" style="edgeStyle=orthogonalEdgeStyle;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.095;entryY=0.016;entryDx=0;entryDy=0;entryPerimeter=0;strokeColor=default;strokeWidth=3;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=16;fontColor=default;fontStyle=1;labelBackgroundColor=default;endArrow=classic;" parent="1" source="Wdqpl3CdpJsHmuXEMJ47-31" target="Wdqpl3CdpJsHmuXEMJ47-14" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-35" value="Cluster design:&lt;br&gt;3 controllers with quorum&lt;br&gt;3 brokers for replication factor 2&lt;br&gt;Topic partitions: based on application needs" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=16;strokeWidth=3;align=left;spacingTop=0;spacingLeft=5;spacingBottom=5;" parent="1" vertex="1">
+                    <mxGeometry x="810" y="-2075" width="310" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="Wdqpl3CdpJsHmuXEMJ47-39" value="NETWORK: kafka-net" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;fontSize=16;strokeWidth=3;fillColor=none;fontColor=default;strokeColor=#006EAF;" parent="1" vertex="1">
+                    <mxGeometry x="30" y="-1130" width="590" height="50" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

@@ -1,0 +1,223 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: mongo-init-scripts
+    namespace: authentication
+data:
+    lifecycle-prestop.sh: |
+        remove_from_cluster() {
+            PRIMARY_INDEX="0"
+            INIT_HOST="mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${POD_NAME}-${PRIMARY_INDEX}.${SERVICE_NAME}.${NAMESPACE}.svc.cluster.local:27017"
+
+            until mongosh $INIT_HOST --quiet --eval "db.adminCommand('ping')" >/dev/null 2>&1; do
+                echo "\033[34m====================================\033[0m"
+                echo "\033[34mWaiting for MongoDB to be ready...\033[0m"
+                echo "\033[34m====================================\033[0m"
+
+                sleep 5;
+            done
+
+            PRIMARY_HOST=$(mongosh $INIT_HOST --quiet --eval 'rs.isMaster().primary')
+
+            echo "\033[34m====================================\033[0m"
+            echo "\033[34mPrimary host detected: $PRIMARY_HOST\033[0m"
+            echo "\033[34m====================================\033[0m"
+
+            RESULT=$(mongosh "mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${PRIMARY_HOST}" --quiet --eval "
+                function removeFromCluster() {
+                    var service_name = \"${SERVICE_NAME}\"
+                    var namespace = \"${NAMESPACE}\"
+                    var port = \"${PORT}\"           
+
+                    try {
+                        const host = \`\${os.hostname()}.\${service_name}.\${namespace}.svc.cluster.local:\${port}\`
+                        rs.remove(host)
+                        print(\`\x1b[32mNode removed: \${host}\x1b[0m\`);
+                        return 'success';
+                    } catch (err) {
+                        print('\x1b[31m====================================\x1b[0m', '\x1b[31m====================================\x1b[0m')
+                        print(JSON.stringify(err))
+                        print('\x1b[31m====================================\x1b[0m', '\x1b[31m====================================\x1b[0m')
+                        
+                        return 'error';                    
+                    }
+                }
+
+                removeFromCluster()
+            ")
+        }
+
+        remove_from_cluster
+
+    init-cluster.sh: |
+        #!/bin/bash
+
+        echo -e "\033[34m====================================\033[0m"
+        echo -e "\033[34mCLUSTER INIT BEGIN!\033[0m"
+        echo -e "\033[34m====================================\033[0m"
+
+        sleep 10
+
+        add_to_cluster() {
+            PRIMARY_INDEX="0"
+            INIT_HOST="mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${POD_NAME}-${PRIMARY_INDEX}.${SERVICE_NAME}.${NAMESPACE}.svc.cluster.local:27017"
+
+            until mongosh $INIT_HOST --quiet --eval "db.adminCommand('ping')" >/dev/null 2>&1; do
+                echo "\033[34m====================================\033[0m"
+                echo "\033[34mWaiting for MongoDB to be ready...\033[0m"
+                echo "\033[34m====================================\033[0m"
+
+                sleep 5;
+            done
+
+            PRIMARY_HOST=$(mongosh $INIT_HOST --quiet --eval 'rs.isMaster().primary')
+
+            echo "\033[34m====================================\033[0m"
+            echo "\033[34mPrimary host detected: $PRIMARY_HOST\033[0m"
+            echo "\033[34m====================================\033[0m"
+
+            MAX_RETRIES=5
+                RETRY_COUNT=0
+
+                while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+
+                RESULT=$(mongosh "mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${PRIMARY_HOST}" --quiet --eval "
+                    function addToTheCluster() {
+                        var service_name = \"${SERVICE_NAME}\"
+                        var namespace = \"${NAMESPACE}\"
+                        var port = \"${PORT}\"           
+
+                        try {
+                            const host = \`\${os.hostname()}.\${service_name}.\${namespace}.svc.cluster.local:\${port}\`
+                            rs.add(host)
+                            print(\`\x1b[32mNode added: \${host}\x1b[0m\`);
+                            return 'success';
+                        } catch (err) {
+                            if (err.codeName === 'NewReplicaSetConfigurationIncompatible') {
+                                print('\x1b[32mThe node is already part of the set.\x1b[0m')
+                                return 'exists';
+                            } else {
+                                print('\x1b[31m====================================\x1b[0m', '\x1b[31m====================================\x1b[0m')
+                                print(JSON.stringify(err))
+                                print('\x1b[31m====================================\x1b[0m', '\x1b[31m====================================\x1b[0m')
+                                
+                                print('\x1b[31m====================================\x1b[0m')
+                                print('\x1b[31mRetring in 10 sec\x1b[0m')
+                                print('\x1b[31m====================================\x1b[0m')
+                                
+                                return 'error';
+                            }
+                        }
+                    }
+
+                    addToTheCluster()
+                ")
+
+                case "$RESULT" in
+                    *success*|*exists*)
+
+                        echo -e "\033[32m====================================\033[0m"
+                        echo -e "\033[32mReplica set membership check done.\033[0m"
+                        echo -e "\033[32m====================================\033[0m"
+
+                        break
+                        ;;
+                    *)
+
+                        echo -e "\033[31m====================================\033[0m"
+                        echo -e "\033[31mAdd failed, retrying in 10 seconds...\033[0m"
+                        echo -e "\033[31m====================================\033[0m"
+
+                        sleep 10
+                        RETRY_COUNT=$((RETRY_COUNT + 1))
+                        ;;
+                esac
+            done
+
+            if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+                echo -e "\033[31m====================================\033[0m"
+                echo -e "\033[31mFailed to add node to replica set after $MAX_RETRIES attempts.\033[0m"
+                echo -e "\033[31m====================================\033[0m"
+
+                return 1
+            fi
+        }
+
+        init() {
+          mongosh --eval "
+
+            var hostname = \"${hostname}\"
+            var cluster_id = \"${CLUSTER_ID}\"
+            var replicas = parseInt(\"${REPLICAS}\") || 0
+            var pod_name = \"${POD_NAME}\"
+            var service_name = \"${SERVICE_NAME}\"
+            var namespace = \"${NAMESPACE}\"
+            var port = \"${PORT}\"
+            var user = \"${MONGO_INITDB_ROOT_USERNAME}\"
+            var pass = \"${MONGO_INITDB_ROOT_PASSWORD}\"
+
+            function sleep(ms) {
+                const start = Date.now();
+                while (Date.now() - start < ms) {}
+            }
+
+            try {
+                const members = Array(replicas).fill(null).map((_, index) => {
+                    return {
+                        _id: index,
+                        host: \`\${pod_name}-\${index}.\${service_name}.\${namespace}.svc.cluster.local:\${port}\`
+                    }
+                })
+
+                print('\x1b[32m=====================================================\x1b[32m');
+                print('\x1b[32mMongoDB Cluster Members:\x1b[32m', \`\x1b[32m\${JSON.stringify(members)}\x1b[32m\`);
+                print('\x1b[32m=====================================================\x1b[32m');
+
+                rs.initiate({
+                    _id: cluster_id,
+                    members: members
+                });
+
+                while (!db.isMaster().ismaster) {
+
+                    print('\x1b[32m=====================================================\x1b[32m');
+                    print('\x1b[32mMongoDB Cluster: Waiting for primary election...\x1b[32m');
+                    print('\x1b[32m=====================================================\x1b[32m');
+
+                    sleep(2000);
+                }
+
+                db = db.getSiblingDB('admin');
+                db.createUser({
+                    user: user,
+                    pwd: pass,
+                    roles: [{ role: 'root', db: 'admin' }]
+                });
+
+                print('\x1b[32m=============================================\x1b[32m');
+                print('\x1b[32m======== MongoDB Admin user created! ========\x1b[32m');
+                print('\x1b[32m=============================================\x1b[32m');
+
+            } catch (e) {
+                if (e.codeName === 'AlreadyInitialized' || e.codeName === 'Unauthorized') {
+
+                    print('\x1b[33m===========================================================\x1b[0m');
+                    print('\x1b[33mMONGODB WARNING:\x1b[33m', \`\\x1b[33m\${JSON.stringify(e)}\x1b[33m\`);
+                    print('\x1b[33m===========================================================\x1b[0m');
+
+                } else {
+
+                    print('\x1b[31m===========================================================\x1b[31m');
+                    print('\x1b[31mMONGODB ERROR:\x1b[31m', \`\\x1b[31m\${JSON.stringify(e)}\x1b[31m\`);
+                    print('\x1b[31m===========================================================\x1b[31m');
+
+                }
+            }
+          "
+        }
+
+        # START
+        init
+
+        # RECHECK
+        add_to_cluster

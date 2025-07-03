@@ -1,0 +1,117 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+    name: kafka-broker-node
+    namespace: authentication
+spec:
+    replicas: 3
+    selector:
+        matchLabels:
+            app: kafka-broker-node
+            app.kubernetes.io/name: kafka-broker-node
+            app.kubernetes.io/component: db
+            app.kubernetes.io/instance: development
+    serviceName: kafka-service-broker
+    template:
+        metadata:
+            labels:
+                app: kafka-broker-node
+                app.kubernetes.io/name: kafka-broker-node
+                app.kubernetes.io/component: db
+                app.kubernetes.io/instance: development
+        spec:
+            containers:
+                - name: kafka-container
+                  image: apache/kafka:latest
+                  ports:
+                      - containerPort: 9093
+                        name: kafka-port
+                  command: ['sh', '-c']
+                  args:
+                      - |
+                          echo "Running controller members script..."
+                          /mnt/shared/config/commando/commando.sh
+
+                  env:
+                      - name: REPLICAS
+                        value: '3'
+
+                      - name: CONTROLLER_REPLICAS
+                        value: '3'
+
+                      - name: CONTROLLER_SERVICE
+                        value: 'kafka-service-controller'
+
+                      - name: POD_NAME_CONTROLLER
+                        value: kafka-controller-node
+
+                      - name: POD_NAME_INDEX
+                        valueFrom:
+                            fieldRef:
+                                fieldPath: metadata.name
+
+                      - name: KAFKA_CLUSTER_ID
+                        valueFrom:
+                            secretKeyRef:
+                                name: kafka-cluster-secrets
+                                key: KAFKA_CLUSTER_ID
+
+                      - name: SERVICE_NAME
+                        value: 'kafka-service-broker'
+
+                      - name: KAFKA_CONTROLLER_UUIDs
+                        valueFrom:
+                            secretKeyRef:
+                                name: kafka-cluster-secrets
+                                key: KAFKA_CONTROLLER_UUIDs
+
+                      - name: NAMESPACE
+                        valueFrom:
+                            fieldRef:
+                                fieldPath: metadata.namespace
+
+                      - name: KAFKA_PROCESS_ROLES
+                        value: broker
+
+                      - name: KAFKA_CONTROLLER_LISTENER_NAMES
+                        value: CONTROLLER
+
+                      - name: KAFKA_LISTENERS
+                        value: PLAINTEXT://0.0.0.0:9092
+
+                      - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+                        value: '2'
+
+                      - name: KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
+                        value: '2'
+
+                      - name: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR
+                        value: '2'
+
+                      - name: KAFKA_LOG_DIR
+                        value: /var/lib/kafka/data
+
+                      - name: USER_CONFIG_DIR
+                        value: /mnt/shared/config
+
+                  volumeMounts:
+                      - name: kafka-logs
+                        mountPath: /var/lib/kafka/data
+
+                      - name: kafka-init-cluster
+                        mountPath: /mnt/shared/config/commando
+                        readOnly: true
+
+            volumes:
+                - name: kafka-init-cluster
+                  configMap:
+                      name: kafka-init-scripts
+                      defaultMode: 0755
+    volumeClaimTemplates:
+        - metadata:
+              name: kafka-logs
+          spec:
+              accessModes: ['ReadWriteOnce']
+              resources:
+                  requests:
+                      storage: 1Gi

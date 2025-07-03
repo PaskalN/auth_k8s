@@ -1,0 +1,19 @@
+# Define the headless service
+apiVersion: v1
+kind: Service
+metadata:
+    name: kafka-service-controller
+    namespace: authentication
+spec:
+    selector: # Pod Selector
+        app: kafka-controller-node
+        app.kubernetes.io/name: kafka-controller-node
+        app.kubernetes.io/component: db
+        app.kubernetes.io/instance: development
+    ports:
+        - name: kafka # 👈 this "name" does NOT influence DNS. This is important when we have loadbalancer. Instead of to use localhost:3030 you can do localhost:be-app
+          port: 9093
+
+          # !!! THE PORTNAME MUST BE NO MORE THAN 15 CHARS !!!
+          targetPort: kafka-port # if the conatiner port has a name, use the name instead of the port number
+    clusterIP: None # <-- Define the headless and terminate the loadbalancer

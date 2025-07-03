@@ -1,0 +1,24 @@
+# Define the headless service
+apiVersion: v1
+kind: Service
+metadata:
+    name: redis-service
+    namespace: authentication
+spec:
+    selector: # Pod Selector
+        app: redis-node
+        app.kubernetes.io/name: redis-node
+        app.kubernetes.io/component: db
+        app.kubernetes.io/instance: development
+    ports:
+        - name: redis # 👈 this "name" does NOT influence DNS. This is important when we have loadbalancer. Instead of to use localhost:3030 you can do localhost:be-app
+          port: 6379
+
+          # !!! THE PORTNAME MUST BE NO MORE THAN 15 CHARS !!!
+          targetPort: redis-port # if the conatiner port has a name, use the name instead of the port number
+
+        - name: bus-port
+          port: 16379
+          targetPort: redis-bust-port
+
+    clusterIP: None # <-- Define the headless and terminate the loadbalancer
