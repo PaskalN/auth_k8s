@@ -1,0 +1,147 @@
+# DNS = <POD_NAME>.<SERVICE_NAME>.<NAMESPACE>.svc.cluster.local:<PORT>
+# in this case we will have <POD_NAME>-0 <POD_NAME>-1 <POD_NAME>-2 because of replica 3
+# and the DNS are
+
+# mongo-node-0.mongo-service.authentication.svc.cluster.local:27017
+# mongo-node-1.mongo-service.authentication.svc.cluster.local:27017
+# mongo-node-2.mongo-service.authentication.svc.cluster.local:27017
+
+# in mongo container we need
+
+# rs.initiate({
+#   _id: "auth_rs",
+#   members: [
+#     { _id: 0, host: "mongo-node-0.mongo-service.authentication.svc.cluster.local:27017" },
+#     { _id: 1, host: "mongo-node-1.mongo-service.authentication.svc.cluster.local:27017" },
+#     { _id: 2, host: "mongo-node-2.mongo-service.authentication.svc.cluster.local:27017" }
+#   ]
+# })
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+    name: mongo-node # --- POD_NAME
+    namespace: authentication # --- NAMESPACE
+spec:
+    selector:
+        matchLabels:
+            app: mongo-auth
+            app.kubernetes.io/name: mongo-node
+            app.kubernetes.io/component: db
+            app.kubernetes.io/instance: development
+
+    # serviceName: --- SERVICE_NAME
+    serviceName: mongo-service # This is the service to which the StatefulSet belongs
+    replicas: 3
+    template:
+        metadata:
+            labels:
+                app: mongo-auth
+                app.kubernetes.io/name: mongo-node
+                app.kubernetes.io/component: db
+                app.kubernetes.io/instance: development
+        spec:
+            containers:
+                - name: mongo-container # purely for identification in the pod, no effect on DNS
+                  image: mongo
+                  ports:
+                      - containerPort: 27017 #--- <PORT>
+                        name: mongo-port # instead of using the containerPort we can use a friendly name. Especially for Service targetPort.
+                  command:
+                      - sh
+                      - -c
+
+                  # The following scripts start the mongodb node and automatically inject it into the replset.
+                  args:
+                      - |
+
+                          echo "Starting mongod..."
+                          mongod --bind_ip_all --replSet auth_rs --keyFile /etc/mongo-keyfile --auth &
+                          pid=$!
+
+                          echo "Waiting for mongod to be ready..."
+                          until mongosh --eval "db.adminCommand('ping')" > /dev/null 2>&1; do
+                            sleep 2
+                          done
+
+                          echo "Running init script..."
+                          chmod +x /mongodb-scripts/init-cluster.sh
+                          /mongodb-scripts/init-cluster.sh
+
+                          echo "Replica set initialized. Handing over to mongod..."
+                          wait $pid
+
+                  # This hook is used to remove the node from the replset when scale down
+                  lifecycle:
+                      preStop:
+                          exec:
+                              command: ['/bin/sh', '-c', '/mongodb-scripts/lifecycle-prestop.sh']
+
+                  env:
+                      # Get the USERNAME from secrets
+                      - name: MONGO_INITDB_ROOT_USERNAME
+                        valueFrom:
+                            secretKeyRef:
+                                name: mongo-cluster-secrets
+                                key: mongo-db-user
+
+                      # Get the PASSWORD from secrets
+                      - name: MONGO_INITDB_ROOT_PASSWORD
+                        valueFrom:
+                            secretKeyRef:
+                                name: mongo-cluster-secrets
+                                key: mongo-db-password
+
+                      - name: CLUSTER_ID
+                        value: 'auth_rs' # same as the mongodb replSet
+
+                      - name: POD_NAME
+                        value: 'mongo-node' # same as metadata.name | no without sufix
+
+                      - name: SERVICE_NAME
+                        value: 'mongo-service' # same as serviceName field
+
+                      - name: NAMESPACE # same as metadata.namespace
+                        valueFrom:
+                            fieldRef:
+                                fieldPath: metadata.namespace
+
+                      - name: PORT
+                        value: '27017' # same as containerPort field
+
+                      - name: REPLICAS
+                        value: '3' # same as replicas field
+
+                  volumeMounts: # tells the container where are the volumes (spaces)
+                      - name: mongo-volume # this is the name of the claimed volume
+                        mountPath: /data/db # this prop tels where the claimed volume to be mounted
+
+                      - name: keyfile-volume # this is the name of the defined volume
+                        mountPath: /etc/mongo-keyfile # this is where to look in the container for that resource
+                        subPath: mongo-secret-key # this subpath is confused but actually it points to a file called "mongo-secret-key". Once the secrets are mount the are exported as files for each prop in data:
+                        readOnly: true
+
+                      - name: mongo-init-cluster
+                        mountPath: /mongodb-scripts
+                        readOnly: true
+
+            volumes: # defines volumes available in the pod spec (for things like secrets, configmaps).
+                - name: mongo-init-cluster
+                  configMap:
+                      name: mongo-init-scripts
+                      defaultMode: 0755
+
+                - name: keyfile-volume
+                  secret: # create a volume "keyfile-volume" from the secrets with name "mongo-cluster-secrets" and set status 0400 for each file that will be generated for each data prop
+                      secretName: mongo-cluster-secrets # the name of the secrets
+                      defaultMode: 0400
+
+    # Don't forget to remove PVC when scale down
+    volumeClaimTemplates: # defines persistent volume claims (PVCs) for your StatefulSet pods. If the pod dies, the volume is still alive and the data remains
+        - metadata:
+              name: mongo-volume
+          spec:
+              accessModes: ['ReadWriteOnce']
+              resources:
+                  requests:
+                      storage: 1Gi

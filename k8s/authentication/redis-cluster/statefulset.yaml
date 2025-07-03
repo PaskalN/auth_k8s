@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+    name: redis-node
+    namespace: authentication
+spec:
+    replicas: 6
+    selector:
+        matchLabels:
+            app: redis-node
+            app.kubernetes.io/name: redis-node
+            app.kubernetes.io/component: db
+            app.kubernetes.io/instance: development
+    serviceName: redis-service
+    template:
+        metadata:
+            labels:
+                app: redis-node
+                app.kubernetes.io/name: redis-node
+                app.kubernetes.io/component: db
+                app.kubernetes.io/instance: development
+
+        spec:
+            containers:
+                - name: redis-container
+                  image: redis:latest
+                  ports:
+                      - containerPort: 6379
+                        name: redis-port
+
+                      - containerPort: 16379
+                        name: redis-bust-port
+
+                  command: ['sh', '-c']
+                  args:
+                      - |
+                          echo "Running cluster init script..."
+                          /mnt/init/commando.sh
+
+                  lifecycle:
+                      preStop:
+                          exec:
+                              command: ['sh', '/mnt/init/prestop.sh']
+                  env:
+                      - name: PORT
+                        value: '6379'
+
+                      # REMEMEBER: REDIS REQUIRES AT LEAST 3 MASTERS TO BUILD A CLUSTER !!!
+                      - name: REPLICAS
+                        value: '6'
+
+                      - name: CLUSTER_REPLICAS
+                        value: '1'
+
+                      - name: SERVICE_NAME
+                        value: 'redis-service'
+
+                      - name: NAMESPACE
+                        valueFrom:
+                            fieldRef:
+                                fieldPath: metadata.namespace
+
+                      - name: POD_NAME_INDEX
+                        valueFrom:
+                            fieldRef:
+                                fieldPath: metadata.name
+
+                      - name: MOUNT_POINT
+                        value: '/mnt/init'
+
+                  volumeMounts:
+                      - name: redis-data
+                        mountPath: /data
+
+                      - name: redis-init
+                        mountPath: /mnt/init
+                        readOnly: true
+
+            volumes:
+                - name: redis-init
+                  configMap:
+                      name: redis-init-scripts
+                      defaultMode: 0755
+
+    volumeClaimTemplates:
+        - metadata:
+              name: redis-data
+          spec:
+              accessModes: ['ReadWriteOnce']
+              resources:
+                  requests:
+                      storage: 10Gi
