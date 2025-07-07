@@ -1,0 +1,47 @@
+# Names
+appName: kafka-controller-node
+configMapName: kafka-init-scripts
+
+# Namespace
+namespace: authentication-kafka-controller
+
+# Replicas
+replicas: 3
+
+# Labels:
+labels:
+  custom:
+    app: "Values.appName"
+
+  kubernetes:
+    io:
+      app: "Values.appName"
+      component: db
+      instance: development
+
+# Kafka
+kafka:
+  controller:
+    listenerName: "CONTROLLER"
+    listener: "0.0.0.0:9093"
+
+# Pod Settings
+pod:
+  image: apache/kafka:latest
+  containerName: kafka-container
+  port:
+    number: 9093
+    target: kafka-port
+  resources:
+    enabled: false
+    requests:
+      cpu: "1"
+      memory: "2Gi"
+    limits:
+      cpu: "2"
+      memory: "4Gi"
+
+service:
+  name: kafka-service-controller
+  port:
+    name: kafka

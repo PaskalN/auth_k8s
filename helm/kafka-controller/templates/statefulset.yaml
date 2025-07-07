@@ -1,0 +1,102 @@
+{{- $ := . }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+    name: {{.Values.appName | quote}}
+    namespace: {{.Values.namespace}}
+spec:
+    replicas: {{.Values.replicas}}
+    selector:
+        matchLabels:
+        {{- include "global.commonMetadata" $ | nindent 12}}
+    serviceName: {{ .Values.service.name | quote}}
+    template:
+        metadata:
+            labels: 
+            {{- include "global.commonMetadata" $ | nindent 16}}
+        spec:
+            containers:
+                - name: {{.Values.pod.containerName}}
+                  image: {{.Values.pod.image}}
+                  ports:
+                    - containerPort: {{ .Values.pod.port.number }}
+                      name: {{  trunc 15 .Values.pod.port.target | lower | quote }}
+                  command: ['sh', '-c']
+                  args:
+                      - |
+                          echo "Running controller members script..."
+                          /mnt/shared/config/commando/commando.sh
+                  env:
+                      - name: REPLICAS
+                        value: {{.Values.replicas | quote}}
+
+                      - name: POD_NAME_INDEX
+                        valueFrom:
+                            fieldRef:
+                                fieldPath: metadata.name
+
+                      - name: NAMESPACE
+                        valueFrom:
+                            fieldRef:
+                                fieldPath: metadata.namespace
+
+                      - name: KAFKA_CLUSTER_ID
+                        valueFrom:
+                            secretKeyRef:
+                                name: kafka-cluster-secrets
+                                key: KAFKA_CLUSTER_ID
+
+                      - name: KAFKA_CONTROLLER_UUIDs
+                        valueFrom:
+                            secretKeyRef:
+                                name: kafka-cluster-secrets
+                                key: KAFKA_CONTROLLER_UUIDs
+
+                      - name: SERVICE_NAME
+                        value: {{ .Values.service.name | quote}}
+
+                      - name: KAFKA_PROCESS_ROLES
+                        value: controller
+
+                      - name: KAFKA_CONTROLLER_LISTENER_NAMES
+                        value: {{ .Values.kafka.controller.listenerName | quote}}
+
+                      - name: KAFKA_LISTENERS
+                        value: CONTROLLER://{{ .Values.kafka.controller.listener }}
+
+                      - name: USER_CONFIG_DIR
+                        value: /mnt/shared/config
+
+                      - name: KAFKA_LOG_DIR
+                        value: /var/lib/kafka/data
+
+                  volumeMounts:
+                      - name: kafka-logs
+                        mountPath: /var/lib/kafka/data
+
+                      - name: kafka-init-cluster
+                        mountPath: /mnt/shared/config/commando
+                        readOnly: true
+
+                  {{- if .Values.pod.resources.enabled -}}
+                  resources:
+                      requests:
+                          memory: {{ default "2Gi" .Values.pod.resources.requests.memory | quote }}
+                          cpu: {{ default "1" .Values.pod.resources.requests.cpu | quote }}
+                      limits:
+                          memory: {{ default "4Gi" .Values.pod.resources.limits.memory | quote }}
+                          cpu: {{ default "2" .Values.pod.resources.limits.cpu | quote }}
+                  {{end}}
+            volumes:
+                - name: kafka-init-cluster
+                  configMap:
+                      name: {{ .Values.configMapName }}
+                      defaultMode: 0755
+    volumeClaimTemplates:
+        - metadata:
+            name: kafka-logs
+          spec:
+            accessModes: ['ReadWriteOnce']
+            resources:
+                requests:
+                    storage: 1Gi

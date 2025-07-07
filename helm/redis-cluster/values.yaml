@@ -1,0 +1,52 @@
+# Names
+appName: redis-node
+configMapName: redis-init-scripts
+
+# Namespace
+namespace: authentication-redis
+
+# Replicas
+replicas: 6
+
+# Labels:
+labels:
+  custom:
+    app: "Values.appName"
+
+  kubernetes:
+    io:
+      app: "Values.appName"
+      component: db
+      instance: development
+
+# Redis
+redis:
+  settings:
+    cluster_replicas: 1
+
+# Pod Settings
+pod:
+  image: redis:latest
+  containerName: redis-container
+  port:
+    number: 6379
+    target: redis-port
+  bus_port:
+    number: 16379
+    target: redis-bus-port
+  resources:
+    enabled: false
+    requests:
+      cpu: "1"
+      memory: "2Gi"
+    limits:
+      cpu: "2"
+      memory: "4Gi"
+
+# Service settings
+service:
+  name: redis-service
+  port:
+    name: redis
+  bus_port:
+    name: redis-bus

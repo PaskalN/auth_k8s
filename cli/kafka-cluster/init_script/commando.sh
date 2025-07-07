@@ -3,11 +3,11 @@
 set -e
 
 if [ "$KAFKA_PROCESS_ROLES" = "controller" ]; then
-    source "${USER_CONFIG_DIR}/commando/commando_controller_members.sh"
+    . "${USER_CONFIG_DIR}/commando/commando_controller_members.sh"
 fi
 
 if [ "$KAFKA_PROCESS_ROLES" = "broker" ]; then
-    source "${USER_CONFIG_DIR}/commando/commando_broker_members.sh"
+    . "${USER_CONFIG_DIR}/commando/commando_broker_members.sh"
 fi
 
 split_string() {

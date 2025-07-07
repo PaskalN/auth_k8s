@@ -168,32 +168,38 @@ data:
     Failed to rebalance cluster after $MAX_RETRIES attempts.\" 1\n    return 1\n}\n\nget_rest_master_id_list()
     {\n    INITIAL_NODES=$(construct_initial_node_set \"$REPLICAS\" \"$SERVICE_NAME\"
     \"$NAMESPACE\" \"$POD_NAME\")\n    CLUSTER_NODE_DNS=$(get_healthy_cluster_node_dsn
-    \"$INITIAL_NODES\")\n\n    RESULT=$(redis-cli -h \"$CLUSTER_NODE_DNS\" -p \"$PORT\"
-    cluster nodes | awk -v myid=\"$MYID\" '$3 ~ /master/ && $1 != myid {print $1}')\n\n
-    \   echo \"$RESULT\"\n}\n\nget_rest_master_id_list_comma() {\n    INITIAL_NODES=$(construct_initial_node_set
-    \"$REPLICAS\" \"$SERVICE_NAME\" \"$NAMESPACE\" \"$POD_NAME\")\n    CLUSTER_NODE_DNS=$(get_healthy_cluster_node_dsn
-    \"$INITIAL_NODES\")\n\n    RESULT=$(redis-cli -h \"$CLUSTER_NODE_DNS\" -p \"$PORT\"
-    cluster nodes | awk -v myid=\"$MYID\" '\n        $3 ~ /master/ && $1 != myid {
-    \n            ids = (ids == \"\" ? $1 : ids \",\" $1) \n        } \n        END
-    { print ids }\n    ')\n\n    echo \"$RESULT\"\n}\n\nget_first_rest_master_id()
+    \"$INITIAL_NODES\")\n    MYID=$(get_my_node_id)\n    \n    RESULT=$(redis-cli
+    -h \"$CLUSTER_NODE_DNS\" -p \"$PORT\" cluster nodes | awk -v myid=\"$MYID\" '$3
+    ~ /master/ && $1 != myid {print $1}')\n\n    echo \"$RESULT\"\n}\n\nget_rest_master_id_list_comma()
     {\n    INITIAL_NODES=$(construct_initial_node_set \"$REPLICAS\" \"$SERVICE_NAME\"
+    \"$NAMESPACE\" \"$POD_NAME\")\n    CLUSTER_NODE_DNS=$(get_healthy_cluster_node_dsn
+    \"$INITIAL_NODES\")\n    MYID=$(get_my_node_id)  # ← Ensure your current node
+    ID is available\n\n    RESULT=$(redis-cli -h \"$CLUSTER_NODE_DNS\" -p \"$PORT\"
+    cluster nodes | awk -v myid=\"$MYID\" '\n        $3 ~ /master/ && $1 != myid {\n
+    \           ids = (ids == \"\" ? $1 : ids \",\" $1)\n        }\n        END {
+    print ids }\n    ')\n\n    echo \"$RESULT\"\n}\n\nget_first_rest_master_id() {\n
+    \   INITIAL_NODES=$(construct_initial_node_set \"$REPLICAS\" \"$SERVICE_NAME\"
     \"$NAMESPACE\" \"$POD_NAME\")\n    CLUSTER_NODE_DNS=$(get_healthy_cluster_node_dsn
     \"$INITIAL_NODES\")\n\n    FIRST_ID=$(redis-cli -h \"$CLUSTER_NODE_DNS\" -p \"$PORT\"
     cluster nodes | awk -v myid=\"$MYID\" '\n        $3 ~ /master/ && $1 != myid {
     print $1; exit }\n    ')\n\n    echo \"$FIRST_ID\"\n}\n\nget_my_node_id() {\n
     \   CURRENT_NODE_ID=$(redis-cli -p \"$PORT\" cluster myid)\n    echo \"$CURRENT_NODE_ID\"\n}\n\nmove_all_slots_to_masters()
     {\n    MAX_RETRIES=5\n    RETRY_DELAY=2  # seconds\n    ATTEMPT=1\n\n    while
-    [ \"$ATTEMPT\" -le \"$MAX_RETRIES\" ]; do\n        MASTER_ID_LIST=$(get_rest_master_id_list_comma)\n
-    \       CURRENT_MASTER_ID=$(get_my_node_id)\n\n        print_green \"Attempt $ATTEMPT:
-    Resharding cluster slots\" 1\n\n        if redis-cli --cluster reshard <cluster_node>:6379
-    --from \"$CURRENT_MASTER_ID\" --to \"$MASTER_ID_LIST\" --slots 16500 --yes; then\n
-    \           print_green \"Resharding succeeded.\" 1\n            return 0\n        else\n
-    \           print_yellow \"Resharding failed. Retrying in $RETRY_DELAY seconds...\"
-    1\n            CLUSTER_NODE_DNS=$(get_healthy_cluster_node_dsn \"$INITIAL_NODES\")\n
-    \           call_cluster_fix \"$CLUSTER_NODE_DNS\"\n\n            sleep \"$RETRY_DELAY\"\n
-    \           RETRY_DELAY=$(( RETRY_DELAY * 2 ))\n            ATTEMPT=$(( ATTEMPT
-    + 1 ))\n        fi\n    done\n\n    print_red \"ERROR: Failed to reshard master
-    slots after $MAX_RETRIES attempts.\" 1\n    return 1\n}\n\ndelete_current_cluster_node()
+    [ \"$ATTEMPT\" -le \"$MAX_RETRIES\" ]; do\n        # MASTER_ID_LIST=$(get_rest_master_id_list_comma)\n
+    \       CURRENT_MASTER_ID=$(get_my_node_id)\n        # INTIAL_MASTER_ID=$(get_first_rest_master_id)\n\n
+    \       INITIAL_NODES=$(construct_initial_node_set \"$REPLICAS\" \"$SERVICE_NAME\"
+    \"$NAMESPACE\" \"$POD_NAME\")    \n        CLUSTER_NODE_DNS=$(get_healthy_cluster_node_dsn
+    \"$INITIAL_NODES\")\n\n        print_green \"Attempt $ATTEMPT: Resharding cluster
+    slots\" 1\n\n        CLUSTER_TO_ARGS=$(get_rest_master_id_list | awk '{printf
+    \"--cluster-to %s \", $0}')        \n        \n        if redis-cli --cluster
+    reshard \"$CLUSTER_NODE_DNS:$PORT\" --cluster-from \"$CURRENT_MASTER_ID\" $CLUSTER_TO_ARGS
+    --cluster-slots 16500 --cluster-yes; then\n            print_green \"Resharding
+    succeeded.\" 1\n            return 0\n        else\n            print_yellow \"Resharding
+    failed. Retrying in $RETRY_DELAY seconds...\" 1\n            CLUSTER_NODE_DNS=$(get_healthy_cluster_node_dsn
+    \"$INITIAL_NODES\")\n            call_cluster_fix \"$CLUSTER_NODE_DNS\"\n\n            sleep
+    \"$RETRY_DELAY\"\n            RETRY_DELAY=$(( RETRY_DELAY * 2 ))\n            ATTEMPT=$((
+    ATTEMPT + 1 ))\n        fi\n    done\n\n    print_red \"ERROR: Failed to reshard
+    master slots after $MAX_RETRIES attempts.\" 1\n    return 1\n}\n\ndelete_current_cluster_node()
     {\n    MAX_RETRIES=5\n    RETRY_DELAY=2  # seconds\n    ATTEMPT=1\n\n    # Get
     your current node ID (the one to delete)\n    CURRENT_NODE_ID=$(get_my_node_id)\n\n
     \   while [ \"$ATTEMPT\" -le \"$MAX_RETRIES\" ]; do\n        # Get a healthy cluster
@@ -221,9 +227,20 @@ data:
     \"$MOUNT_POINT/orchestrate.sh\"\n. \"$MOUNT_POINT/cluster_health.sh\"\n. \"$MOUNT_POINT/default_cluster.sh\"\n.
     \"$MOUNT_POINT/cluster_scaling.sh\"\n. \"$MOUNT_POINT/init_cluster.sh\"\n\nprint_green
     \"INTITIALIZING ....\" 1\n\ninit \"$REDIS_NODE_ID\" \"$CLUSTER_REPLICAS\" \"$REPLICAS\"
-    \"$SERVICE_NAME\" \"$NAMESPACE\" \"$POD_NAME\" \"$PORT\" & \n\nredis-server --port
-    \"$PORT\" --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout
-    \"$CLUSTER_NODE_TIMEOUT\" --appendonly yes\n\n"
+    \"$SERVICE_NAME\" \"$NAMESPACE\" \"$POD_NAME\" \"$PORT\" & \n\n# --- Signal Handling
+    Setup ---\nterm_handler() {\n    echo \"[Entrypoint] SIGTERM received. Waiting
+    for prestop to finish...\"\n    while [ ! -f /tmp/prestop-done ]; do\n        sleep
+    1\n    done\n    echo \"[Entrypoint] Prestop completed. Sending SIGTERM to Redis...\"\n
+    \   kill -TERM \"$REDIS_PID\"\n}\n\ntrap term_handler TERM\n\n# Start Redis in
+    background\n# redis-server --port \"$PORT\" \\\n#              --cluster-enabled
+    yes \\\n#              --cluster-config-file nodes.conf \\\n#              --cluster-node-timeout
+    \"$CLUSTER_NODE_TIMEOUT\" \\\n#              --appendonly yes &\n\n# redis-server
+    --port 0 \\\n#              --tls-port \"$PORT\" \\\n#              --tls-cert-file
+    \"/tls/tls.crt\" \\\n#              --tls-key-file \"/tls/tls.key\" \\\n#              --tls-ca-cert-file
+    \"/tls/ca.crt\" \\\n#              --tls-auth-clients \"yes\" \\\n#              --cluster-enabled
+    yes \\\n#              --cluster-config-file nodes.conf \\\n#              --cluster-node-timeout
+    \"$CLUSTER_NODE_TIMEOUT\" \\\n#              --appendonly yes &\n\n# REDIS_PID=$!\n\n#
+    Wait for Redis\nwhile kill -0 \"$REDIS_PID\" 2>/dev/null; do\n    wait \"$REDIS_PID\"\ndone"
   default_cluster.sh: "#!/bin/sh\n\n# For Debug\n# set -x\nset -e\n\n# Check if the
     current node persists in the cluster\n# ==================================================\nis_node_in_cluster()
     {\n    port=$1\n    output=$(redis-cli -p \"$port\" cluster info 2>/dev/null |
@@ -512,6 +529,8 @@ data:
   prestop.sh: |-
     #!/bin/sh
 
+    # https://redis.io/docs/latest/operate/oss_and_stack/management/scaling/#reshard-the-cluster
+
     set -e
 
     PORT=${PORT:-6379}
@@ -519,11 +538,6 @@ data:
     POD_INDEX=${POD_NAME_INDEX##*-}
     REDIS_NODE_ID=$(expr "$POD_INDEX" + 1)
     POD_NAME="${POD_NAME_INDEX%-[0-9]*}"
-
-    while true; do
-        echo "123"
-        sleep 2
-    done
 
     if [ -z "$MOUNT_POINT" ]; then
         printf "MOUNT_POINT is missing: Please privide value!"
@@ -560,6 +574,12 @@ data:
         exit 1
     fi
 
+
+    LOG_FILE="/mnt/prestop.log"
+
+    echo "[INFO] Starting prestop hook at $(date)" >> "$LOG_FILE" 2>&1
+
+
     . "$MOUNT_POINT/global_tools.sh"
     . "$MOUNT_POINT/cluster_tools.sh"
     . "$MOUNT_POINT/orchestrate.sh"
@@ -579,24 +599,28 @@ data:
         if [ "$IS_MASTER" -eq 1 ]; then
             print_green "Pod is a master. Migrating slots before removal..." 1
             move_all_slots_to_masters
-            operation_loop  # wait for migration to complete
+
+            # 2. Delete node from the cluster
+            delete_current_cluster_node
+
+            call_rebalance
         else
             print_green "Pod is not a master. Proceeding with removal..." 1
+
+            # 2. Delete node from the cluster
+            delete_current_cluster_node
         fi
 
-        # 2. Delete node from the cluster
-        delete_current_cluster_node
-
-        # 3. Rebalance the cluster to ensure fair distribution
         operation_loop
-        call_rebalance
 
         print_green "Pod $POD_NAME removed from Redis cluster successfully." 1
     }
 
-    remove_pod_from_cluster
-  timestamp: "2025-07-04T07:49:07Z"
+    remove_pod_from_cluster  >> "$LOG_FILE" 2>&1
+
+    touch /tmp/prestop-done
+  timestamp: "2025-07-07T14:34:04Z"
 kind: ConfigMap
 metadata:
-  name: redis-init-scripts
-  namespace: authentication
+  name: '{{ .Values.configMapName }}'
+  namespace: '{{ .Values.namespace }}'
