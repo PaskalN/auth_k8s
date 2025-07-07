@@ -1,0 +1,115 @@
+{{- $ := . }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+    name: {{.Values.appName | quote}}
+    namespace: {{.Values.namespace}}
+spec:
+    replicas: {{.Values.replicas}}
+    selector:
+        matchLabels:
+        {{- include "global.commonMetadata" $ | nindent 12}}
+    serviceName: {{ .Values.service.name | quote}}
+    template:
+        metadata:
+            labels: 
+            {{- include "global.commonMetadata" $ | nindent 16}}
+        spec:
+            terminationGracePeriodSeconds: 600
+
+            containers:
+                - name: {{.Values.pod.containerName}}
+                  image: {{.Values.pod.image}}
+
+                  lifecycle:
+                      preStop:
+                          exec:
+                              command: ['/bin/sh', '-c', '/mnt/init/prestop.sh']
+
+                  ports:
+                    - containerPort: {{ .Values.pod.port.number }}
+                      name: {{  trunc 15 .Values.pod.port.target | lower | quote }}
+
+                    - containerPort: {{ .Values.pod.bus_port.number }}
+                      name: {{  trunc 15 .Values.pod.bus_port.target | lower | quote }}
+
+                  command:
+                      - sh
+                      - -c
+
+                  args:
+                    - |
+                        chmod +x /mnt/init/prestop.sh
+                        chmod +x /mnt/init/commando.sh
+
+                        echo "Running cluster init script..."
+                        /mnt/init/commando.sh
+
+                  env:
+                      - name: REPLICAS
+                        value: {{.Values.replicas | quote}}
+
+                      - name: CLUSTER_REPLICAS
+                        value: {{.Values.redis.settings.cluster_replicas | quote}}
+
+                      - name: POD_NAME
+                        value: {{.Values.appName | quote}}
+
+                      - name: POD_NAME_INDEX
+                        valueFrom:
+                            fieldRef:
+                                fieldPath: metadata.name                      
+                                
+                      - name: NAMESPACE
+                        valueFrom:
+                            fieldRef:
+                                fieldPath: metadata.namespace
+                
+                      - name: SERVICE_NAME
+                        value: {{ .Values.service.name | quote}}                      
+
+                      - name: PORT
+                        value: {{ .Values.pod.port.number | quote}} 
+                      
+                      - name: MOUNT_POINT
+                        value: '/mnt/init'
+
+                  volumeMounts:
+                      - name: redis-volume
+                        mountPath: /data
+
+                      - name: redis-init
+                        mountPath: /mnt/init
+                        readOnly: true
+
+                      - name: redis-tls
+                        mountPath: /tls
+                        readOnly: true
+
+                  {{- if .Values.pod.resources.enabled -}}
+                  resources:
+                      requests:
+                          memory: {{ default "2Gi" .Values.pod.resources.requests.memory | quote }}
+                          cpu: {{ default "1" .Values.pod.resources.requests.cpu | quote }}
+                      limits:
+                          memory: {{ default "4Gi" .Values.pod.resources.limits.memory | quote }}
+                          cpu: {{ default "2" .Values.pod.resources.limits.cpu | quote }}
+                  {{end}}
+            volumes:
+                - name: redis-init
+                  configMap:
+                      name: redis-init-scripts
+                      defaultMode: 0755
+
+                - name: redis-tls
+                  secret:
+                      secretName: redis-cluster-secrets
+
+    volumeClaimTemplates:
+        - metadata:
+            name: redis-volume
+          spec:
+            accessModes: ['ReadWriteOnce']
+            resources:
+                requests:
+                    storage: 1Gi

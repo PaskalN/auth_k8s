@@ -1,0 +1,185 @@
+{{- $ := . }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+    name: {{.Values.appName | quote}}
+    namespace: {{.Values.namespace}}
+spec:
+    replicas: {{.Values.replicas}}
+    selector:
+        matchLabels:
+        {{- include "global.commonMetadata" $ | nindent 12}}
+    serviceName: {{ .Values.service.name | quote}}
+    template:
+        metadata:
+            labels: 
+            {{- include "global.commonMetadata" $ | nindent 16}}
+        spec:
+            containers:
+                - name: {{.Values.pod.containerName}}
+                  image: {{.Values.pod.image}}
+                  ports:
+                    - containerPort: {{ .Values.pod.port.number }}
+                      name: {{  trunc 15 .Values.pod.port.target | lower | quote }}
+                  command: ['sh', '-c']
+                  args:
+                      - |
+                          echo "Running controller members script..."
+                          /mnt/shared/config/commando/commando.sh
+                  env:
+                      - name: REPLICAS
+                        value: {{.Values.replicas | quote}}
+
+                      - name: CONTROLLER_REPLICAS
+                        value: {{.Values.controller.replicas | quote}}
+
+                      - name: CONTROLLER_SERVICE
+                        value: {{.Values.controller.serviceName | quote}}
+
+                      - name: POD_NAME_INDEX
+                        valueFrom:
+                            fieldRef:
+                                fieldPath: metadata.name
+
+                      - name: POD_NAME_CONTROLLER
+                        value: {{.Values.controller.podName | quote}}
+
+                      - name: NAMESPACE
+                        valueFrom:
+                            fieldRef:
+                                fieldPath: metadata.namespace
+
+                      - name: CONTROLLER_NAMESPACE
+                        value: {{.Values.controller.namespace | quote}}
+
+                      - name: KAFKA_CLUSTER_ID
+                        valueFrom:
+                            secretKeyRef:
+                                name: kafka-cluster-secrets
+                                key: KAFKA_CLUSTER_ID
+
+                      - name: KAFKA_CONTROLLER_UUIDs
+                        valueFrom:
+                            secretKeyRef:
+                                name: kafka-cluster-secrets
+                                key: KAFKA_CONTROLLER_UUIDs
+
+                      - name: SERVICE_NAME
+                        value: {{ .Values.service.name | quote}}
+
+                      - name: KAFKA_PROCESS_ROLES
+                        value: broker
+
+                      - name: KAFKA_CONTROLLER_LISTENER_NAMES
+                        value: {{ .Values.kafka.broker.listenerName | quote}}
+
+                      - name: KAFKA_LISTENERS
+                        value: {{ .Values.kafka.broker.listener | quote}}
+
+                      - name: USER_CONFIG_DIR
+                        value: /mnt/shared/config
+
+                      - name: KAFKA_LOG_DIR
+                        value: /var/lib/kafka/data
+
+                      - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+                        value: {{ .Values.kafka.settings.offsetTopicReplicationFactor | quote}}
+
+                      - name: KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
+                        value: {{ .Values.kafka.settings.transactionStateLogReplicationFactor | quote}}
+
+                      - name: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR
+                        value: {{ .Values.kafka.settings.transactrionStateLogMinIsr | quote}}
+
+                      {{- if .Values.kafka.settings.numNetworkThreads -}}
+                      - name: KAFKA_NUM_NETWORK_THREADS
+                        value: {{ .Values.kafka.settings.numNetworkThreads | quote}}
+                      {{end}}
+
+                      {{- if .Values.kafka.settings.numIoThreads -}}
+                      - name: KAFKA_NUM_IO_THREADS
+                        value: {{ .Values.kafka.settings.numIoThreads | quote}}
+                      {{end}}
+
+                      {{- if .Values.kafka.settings.socketSendBufferBytes -}}
+                      - name: KAFKA_SOCKET_SEND_BUFFER_BYTES
+                        value: {{ .Values.kafka.settings.socketSendBufferBytes | quote}}
+                      {{end}}
+
+                      {{- if .Values.kafka.settings.kafkaRecieveBufferBytes -}}
+                      - name: KAFKA_RECIEVE_BUFFER_BYTES
+                        value: {{ .Values.kafka.settings.kafkaRecieveBufferBytes | quote}}
+                      {{end}}
+
+                      {{- if .Values.kafka.settings.kafkaRequestMaxBytes -}}
+                      - name: KAFKA_REQUEST_MAX_BYTES
+                        value: {{ .Values.kafka.settings.kafkaRequestMaxBytes | quote}}
+                      {{end}}
+
+                      {{- if .Values.kafka.settings.kafkaNumPartitions -}}
+                      - name: KAFKA_NUM_PARTITIONS
+                        value: {{ .Values.kafka.settings.kafkaNumPartitions | quote}}
+                      {{end}}
+
+                      {{- if .Values.kafka.settings.kafkaRecoveryThreadsPerDataDir -}}
+                      - name: KAFKA_RECOVERY_THREADS_PER_DATA_DIR
+                        value: {{ .Values.kafka.settings.kafkaRecoveryThreadsPerDataDir | quote}}
+                      {{end}}
+
+                      {{- if .Values.kafka.settings.shareCoordinatorStateTopicReplicationFactor -}}
+                      - name: KAFKA_SHARE_COORDINATOR_STATE_TOPIC_REPLICATION_FACTOR
+                        value: {{ .Values.kafka.settings.shareCoordinatorStateTopicReplicationFactor | quote}}
+                      {{end}}
+
+                      {{- if .Values.kafka.settings.shareCoordinatorStateTopicMincIsr -}}
+                      - name: KAFKA_SHARE_COORDINATOR_STATE_TOPIC_MIN_ISR
+                        value: {{ .Values.kafka.settings.shareCoordinatorStateTopicMincIsr | quote}}
+                      {{end}}
+
+                      {{- if .Values.kafka.settings.retentionHours -}}
+                      - name: KAFKA_RETENTION_HOURS
+                        value: {{ .Values.kafka.settings.retentionHours | quote}}
+                      {{end}}
+
+                      {{- if .Values.kafka.settings.logSegmentBytes -}}
+                      - name: KAFKA_LOG_SEGMENT_BYTES
+                        value: {{ .Values.kafka.settings.logSegmentBytes | quote}}
+                      {{end}}
+
+                      {{- if .Values.kafka.settings.retentionCheckIntervalMs -}}
+                      - name: KAFKA_RETENTION_CHECK_INTERVAL_MS
+                        value: {{ .Values.kafka.settings.retentionCheckIntervalMs | quote}}
+                      {{end}}
+
+                  volumeMounts:
+                      - name: kafka-logs
+                        mountPath: /var/lib/kafka/data
+
+                      - name: kafka-init-cluster
+                        mountPath: /mnt/shared/config/commando
+                        readOnly: true
+
+                  {{- if .Values.pod.resources.enabled -}}
+                  resources:
+                      requests:
+                          memory: {{ default "2Gi" .Values.pod.resources.requests.memory | quote }}
+                          cpu: {{ default "1" .Values.pod.resources.requests.cpu | quote }}
+                      limits:
+                          memory: {{ default "4Gi" .Values.pod.resources.limits.memory | quote }}
+                          cpu: {{ default "2" .Values.pod.resources.limits.cpu | quote }}
+                  {{end}}
+                    
+            volumes:
+                - name: kafka-init-cluster
+                  configMap:
+                      name: {{ .Values.configMapName }}
+                      defaultMode: 0755
+                
+    volumeClaimTemplates:
+        - metadata:
+            name: kafka-logs
+          spec:
+            accessModes: ['ReadWriteOnce']
+            resources:
+                requests:
+                    storage: 1Gi
