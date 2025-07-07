@@ -1,0 +1,136 @@
+apiVersion: v1
+data:
+  add_node.js: "function add_node(service_name, namespace, port) {\n\n    const hostname
+    = os.hostname;\n\n    try {\n        const host = `${hostname}.${service_name}.${namespace}.svc.cluster.local:${port}`
+    \       \n        rs.add(host)\n        print_green(`Node added: ${host}`)\n\n
+    \       return 'success';\n    } catch (err) {\n        if (err.codeName === 'NewReplicaSetConfigurationIncompatible')
+    {\n            print_red('The node is already part of the set.')\n            return
+    'exists';\n        } else {\n            print_red(`${JSON.stringify(err)}`)\n\n
+    \           print_red('Retring in 10 sec')\n            return 'error';\n        }\n
+    \   }\n}\n"
+  init-cluster.sh: "#!/bin/bash\n\nset -e\n\n\n\nMOUNT_MOINT=\"/mongodb-scripts\"\nADD_NODE_SCRIPT=\"$MOUNT_MOINT/add_node.js\"\nADD_INIT_CLUSTER_SCRIPT=\"$MOUNT_MOINT/init_cluster.js\"\nINIT_TOOLS_JS=\"$MOUNT_MOINT/tools.js\"\n\n.
+    \"$MOUNT_MOINT/sh-tools.sh\"\n\nprint_green \"CLUSTER INIT BEGIN!\" 1\n\nsleep
+    10\n\nCLEAN_USER=$(echo -n \"$MONGO_INITDB_ROOT_USERNAME\" | tr -d '\\n')\nCLEAN_PASS=$(echo
+    -n \"$MONGO_INITDB_ROOT_PASSWORD\" | tr -d '\\n')\n\nadd_to_cluster() {\n\n    print_green
+    \"ADDING NODE...\" 1\n\n    POD_DNS=\"${HOSTNAME}.${SERVICE_NAME}.${NAMESPACE}.svc.cluster.local\"\n
+    \   \n    CLUSTER_DNS=$(get_cluster_dns_set)\n    \n    if echo \"$CLUSTER_DNS\"
+    | grep -wq \"$POD_DNS\"; then\n        print_green \"The node is part of the cluster.\"
+    1\n        return 0\n    fi\n\n    INITIAL_CLUSTER_DNS=$(get_initial_dns_set)\n
+    \   if echo \"$INITIAL_CLUSTER_DNS\" | grep -wq \"$POD_DNS:$PORT\"; then\n        print_green
+    \"The node is part of the initial cluster set. Setup will be ready soon.\" 1\n
+    \       return 0\n    fi\n\n    print_yellow \"The node is not a part of the initial
+    cluster set and it is not a part of the current cluster. It will be added to the
+    cluster.\" 1\n    PRIMARY_HOST=$(detect_primary_host)\n    print_green \"Primary
+    host detected: $PRIMARY_HOST\" 1\n\n    MAX_RETRIES=5\n    RETRY_COUNT=0\n\n    while
+    [ $RETRY_COUNT -lt $MAX_RETRIES ]; do\n        RESULT=$(mongosh \"mongodb://${CLEAN_USER}:${CLEAN_PASS}@${PRIMARY_HOST}\"
+    --eval \"\n            const path = \\\"${ADD_NODE_SCRIPT}\\\";\n            const
+    tools_path = \\\"${INIT_TOOLS_JS}\\\";\n\n            console.log('Loading: '
+    + tools_path);\n            load(tools_path);\n\n            console.log('Loading:
+    ' + path);\n            load(path);\n\n            add_node('${SERVICE_NAME}',
+    '${NAMESPACE}', ${PORT});\n        \")\n\n        case \"$RESULT\" in\n            *success*|*exists*)\n
+    \               print_green \"Replica set membership check done.\" 1\n                break\n
+    \               ;;\n            *)\n                print_yellow \"Add failed,
+    retrying in 10 seconds...\" 1\n                sleep 10\n\n                RETRY_COUNT=$((RETRY_COUNT
+    + 1))\n                ;;\n        esac\n    done\n\n    if [ $RETRY_COUNT -eq
+    $MAX_RETRIES ]; then    \n        print_red \"Failed to add node to replica set
+    after $MAX_RETRIES attempts.\" 1\n        return 1\n    fi\n}\n\ninit() {\n\n
+    \   CLUSTER_DNS=$(get_cluster_dns_set)\n\n    if [ -z \"$CLUSTER_DNS\" ]; then\n
+    \       print_green \"CLUSTER INITIALIZING...\" 1\n\n        mongosh --eval \"\n
+    \           const path = \\\"${ADD_INIT_CLUSTER_SCRIPT}\\\";\n            const
+    tools_path = \\\"${INIT_TOOLS_JS}\\\";\n\n            console.log('Loading: '
+    + tools_path);\n            load(tools_path);\n\n            console.log('Loading:
+    ' + path);\n            load(path);\n\n            init('${CLUSTER_ID}', '${REPLICAS}',
+    '${POD_NAME}', '${SERVICE_NAME}', '${NAMESPACE}', '${PORT}', '${CLEAN_USER}',
+    '${CLEAN_PASS}')\n        \"\n    fi\n}\n\n# START\ninit\n\n# RECHECK\nadd_to_cluster\n"
+  init_cluster.js: "function init(cluster_id, replicas, pod_name, service_name, namespace,
+    port, user, pass) {\n\n    try {\n        const members = Array(parseInt(replicas)).fill(null).map((_,
+    index) => {\n            return {\n                _id: index,\n                host:
+    `${pod_name}-${index}.${service_name}.${namespace}.svc.cluster.local:${port}`\n
+    \           }\n        })\n\n        print_green(`MongoDB Cluster Members: ${JSON.stringify(members)}`)\n\n
+    \       let success = false;\n        while (!success) {\n            try {\n
+    \               rs.initiate({\n                    _id: cluster_id,\n                    members:
+    members\n                });\n                print_green(`Replica set initiated
+    successfully`);\n\n                while (!db.isMaster().ismaster) {\n                    print_yellow('MongoDB
+    Cluster: Waiting for primary election...')\n                    sleep(2000);\n
+    \               }\n\n                adminDB = db.getSiblingDB('admin');\n                adminDB.createUser({\n
+    \                   user: user,\n                    pwd: pass,\n                    roles:
+    [{ role: 'root', db: 'admin' }]\n                });\n\n                print_green('MongoDB
+    Admin user created!')\n\n                success = true;\n\n            } catch
+    (e) {\n                if (e.codeName === 'AlreadyInitialized' || e.codeName ===
+    'Unauthorized') {\n                    print_yellow(`MONGODB WARNING: ${e.codeName
+    || e.message}`)\n                    success = true;\n                } else {\n
+    \                   print_red(`MONGODB ERROR: ${e.codeName || e.message}`)\n                }\n\n
+    \               sleep(3500);\n            }\n        }       \n    } catch (e)
+    {\n        if (e.codeName === 'AlreadyInitialized' || e.codeName === 'Unauthorized')
+    {\n            print_yellow(`MONGODB WARNING: ${e.codeName || e.message}`)\n        }
+    else {\n            print_red(`MONGODB ERROR: ${e.codeName || e.message}`)\n        }\n
+    \   }\n}\n"
+  lifecycle-prestop.sh: "#!/bin/bash\n\nset -e\n\nMOUNT_MOINT=\"/mongodb-scripts\"\nPRESTOP_SCRIPT=\"$MOUNT_MOINT/prestop.js\"\nJS_TOOLS=\"$MOUNT_MOINT/tools.js\"\n\n.
+    \"$MOUNT_MOINT/sh-tools.sh\"\n\nremove_from_cluster() {\n    CLEAN_USER=$(echo
+    -n \"$MONGO_INITDB_ROOT_USERNAME\" | tr -d '\\n')\n    CLEAN_PASS=$(echo -n \"$MONGO_INITDB_ROOT_PASSWORD\"
+    | tr -d '\\n')\n\n    PRIMARY_HOST=$(detect_primary_host)\n    POD_DNS=\"${HOSTNAME}.${SERVICE_NAME}.${NAMESPACE}.svc.cluster.local:${PORT}\"\n\n
+    \   print_green \"Primary host detected: $PRIMARY_HOST\" 1    \n\n    RESULT=$(mongosh
+    \"mongodb://${CLEAN_USER}:${CLEAN_PASS}@${PRIMARY_HOST}\" --quiet --eval \"        \n
+    \       load('${JS_TOOLS}');\n        load('${PRESTOP_SCRIPT}');\n\n        removeFromCluster('${POD_DNS}')
+    \       \n    \")\n\n    printf \"%s\" \"$RESULT\"\n}\n\necho \"=================================\"\necho
+    \"Removing the node....\"\necho \"=================================\"\n\nsleep
+    2\n\nremove_from_cluster\n\necho \"=================================\"\necho \"Removed\"\necho
+    \"=================================\"\n\nsleep 2\n"
+  prestop.js: "function removeFromCluster(pod_dns) {\n    try {\n        rs.remove(pod_dns)\n
+    \       print_green(`Node removed: ${pod_dns}`)\n\n        cfg = rs.conf();\n
+    \       cfg.version++\n        rs.reconfig(cfg, {force: true});\n\n        print_green(`Reconfiguring!`)\n\n
+    \       return 'success';\n    } catch (err) {\n        print_red(`JSON.stringify(err)`)\n
+    \       return 'error';                    \n    }\n}"
+  sh-tools.sh: "#!/bin/bash\n\nset -e\n\n# Green Printer\n# =============\nprint_green()
+    {\n    TEXT=$1\n    BORDER=${2:-0}\n\n    if [ \"$BORDER\" -eq 1 ]; then\n        printf
+    \"\\n\" \n        printf \"\\033[0;32m %s \\033[0m\" \"=====================================\"
+    \n        printf \"\\n\" \n        printf \"\\033[0;32m %s \\033[0m\" \"$TEXT\"
+    \n        printf \"\\n\" \n        printf \"\\033[0;32m %s \\033[0m\" \"=====================================\"
+    \n        printf \"\\n\" \n    else\n        printf \"\\n\" \n        printf \"\\033[0;32m
+    %s \\033[0m\" \"$TEXT\" \n        printf \"\\n\" \n    fi\n}\n\n# Yellow Printer\n#
+    =============\nprint_yellow() {\n    TEXT=$1\n    BORDER=${2:-0}\n\n    if [ \"$BORDER\"
+    -eq 1 ]; then\n        printf \"\\n\" \n        printf \"\\033[0;33m %s \\033[0m\"
+    \"=====================================\" \n        printf \"\\n\" \n        printf
+    \"\\033[0;33m %s \\033[0m\" \"$TEXT\" \n        printf \"\\n\" \n        printf
+    \"\\033[0;33m %s \\033[0m\" \"=====================================\" \n        printf
+    \"\\n\" \n    else\n        printf \"\\n\" \n        printf \"\\033[0;33m %s \\033[0m\"
+    \"$TEXT\" \n        printf \"\\n\" \n    fi\n}\n\n# Red Printer\n# =============\nprint_red()
+    {\n    TEXT=$1\n    BORDER=${2:-0}\n\n    if [ \"$BORDER\" -eq 1 ]; then\n        printf
+    \"\\n\" \n        printf \"\\033[0;31m %s \\033[0m\" \"=====================================\"
+    \n        printf \"\\n\" \n        printf \"\\033[0;31m %s \\033[0m\" \"$TEXT\"
+    \n        printf \"\\n\" \n        printf \"\\033[0;31m %s \\033[0m\" \"=====================================\"
+    \n        printf \"\\n\" \n    else\n        printf \"\\n\" \n        printf \"\\033[0;31m
+    %s \\033[0m\" \"$TEXT\" \n        printf \"\\n\" \n    fi\n}\n\ndetect_primary_host()
+    {\n    CONN_DNS=$(get_connection_dns_set)\n\n    until mongosh \"$CONN_DNS\" --eval
+    \"db.adminCommand('ping')\" >/dev/null 2>&1; do\n        print_yellow \"Waiting
+    for MongoDB to be ready...\" 1\n        sleep 5;\n    done\n\n    PRIMARY_HOST=$(mongosh
+    \"$CONN_DNS\" --eval 'rs.isMaster().primary')\n    echo \"$PRIMARY_HOST\"\n}\n\nget_connection_dns_set()
+    {\n    index=\"0\"\n    DNS_SET=\"\"\n    SEP=\"\"\n\n    while [ \"$index\" -lt
+    \"$REPLICAS\" ]; do\n        DNS_SET=\"${DNS_SET}${SEP}${POD_NAME}-${index}.${SERVICE_NAME}.${NAMESPACE}.svc.cluster.local:${PORT}\"\n
+    \       index=$((index + 1))\n        SEP=\",\"\n    done\n\n    CONN_DNS=\"mongodb://${CLEAN_USER}:${CLEAN_PASS}@${DNS_SET}/admin?replicaSet=${CLUSTER_ID}\"\n\n
+    \   echo \"$CONN_DNS\"\n}\n\nget_cluster_dns_set() {\n    CONN_DNS=$(get_connection_dns_set)\n
+    \   CLUSTER_DNS=$(mongosh \"$CONN_DNS\" --quiet --eval \"rs.status().members.map(m
+    => m.name.split(':')[0]).join('\\n')\")\n\n    echo \"$CLUSTER_DNS\"\n}\n\nget_initial_dns_set()
+    {\n    index=\"0\"\n    DNS_SET=\"\"\n    SEP=\"\"\n\n    while [ \"$index\" -lt
+    \"$REPLICAS\" ]; do\n        DNS_SET=\"${DNS_SET}${SEP}${POD_NAME}-${index}.${SERVICE_NAME}.${NAMESPACE}.svc.cluster.local:${PORT}\"\n
+    \       index=$((index + 1))\n        SEP=\" \"\n    done\n\n    echo \"$DNS_SET\"
+    \n}"
+  timestamp: "2025-07-06T07:17:45Z"
+  tools.js: "function print_green(message) {\n    const color = '\\x1b[32m';\n    const
+    reset = '\\x1b[0m';\n    const line = '=====================================================';\n
+    \   \n    print(color + line + reset);\n    print(color + ` ${message} ` + reset);\n
+    \   print(color + line + reset);\n}\n\nfunction print_blue(message) {\n    const
+    color = '\\x1b[34m';\n    const reset = '\\x1b[0m';\n    const line = '=====================================================';\n
+    \   \n    print(color + line + reset);\n    print(color + ` ${message} ` + reset);\n
+    \   print(color + line + reset);\n}\n\nfunction print_yellow(message) {\n    const
+    color = '\\x1b[33m';\n    const reset = '\\x1b[0m';\n    const line = '=====================================================';\n
+    \   \n    print(color + line + reset);\n    print(color + ` ${message} ` + reset);\n
+    \   print(color + line + reset);\n}\n\nfunction print_red(message) {\n    const
+    color = '\\x1b[31m';\n    const reset = '\\x1b[0m';\n    const line = '=====================================================';\n
+    \   \n    print(color + line + reset);\n    print(color + ` ${message} ` + reset);\n
+    \   print(color + line + reset);\n}\n\nfunction sleep(ms) {\n    const start =
+    Date.now();\n    while (Date.now() - start < ms) {}\n}"
+kind: ConfigMap
+metadata:
+  name: '{{ .Values.configMapName }}'
+  namespace: '{{ .Values.namespace }}'

@@ -131,8 +131,8 @@ data:
     # to the retention policies
     log.retention.check.interval.ms=((KAFKA_RETENTION_CHECK_INTERVAL_MS))
   commando.sh: "#!/bin/sh\n\nset -e\n\nif [ \"$KAFKA_PROCESS_ROLES\" = \"controller\"
-    ]; then\n    source \"${USER_CONFIG_DIR}/commando/commando_controller_members.sh\"\nfi\n\nif
-    [ \"$KAFKA_PROCESS_ROLES\" = \"broker\" ]; then\n    source \"${USER_CONFIG_DIR}/commando/commando_broker_members.sh\"\nfi\n\nsplit_string()
+    ]; then\n    . \"${USER_CONFIG_DIR}/commando/commando_controller_members.sh\"\nfi\n\nif
+    [ \"$KAFKA_PROCESS_ROLES\" = \"broker\" ]; then\n    . \"${USER_CONFIG_DIR}/commando/commando_broker_members.sh\"\nfi\n\nsplit_string()
     {\n    input=\"$1\"\n    separator=\"$2\"\n    old_IFS=\"$IFS\"\n    IFS=\"$separator\"\n
     \   set -- $input\n    IFS=\"$old_IFS\"\n\n    # Print space-separated items\n
     \   for s in \"$@\"; do\n        echo \"$s\"\n    done\n}\n\nKAFKA_ADVERTISED_LISTENERS=\"\"\n\nif
@@ -263,6 +263,12 @@ data:
         exit 1
     fi
 
+    # CONTROLLER_NAMESPACE CHECKER
+    if [ -z "$CONTROLLER_NAMESPACE" ]; then
+        echo "CONTROLLER_NAMESPACE is missing: Please privide value!"
+        exit 1
+    fi
+
     # CONTROLLER_REPLICAS CHECKER
     if [ -z "$CONTROLLER_REPLICAS" ]; then
         echo "CONTROLLER_REPLICAS is missing: Please privide value!"
@@ -276,7 +282,7 @@ data:
     fi
 
     KAFKA_CONTROLLER_SET_MEMBERS=$(
-      awk -v replicas="$CONTROLLER_REPLICAS" -v node_name="$POD_NAME_CONTROLLER" -v service_name="$CONTROLLER_SERVICE" -v namespace="$NAMESPACE" '
+      awk -v replicas="$CONTROLLER_REPLICAS" -v node_name="$POD_NAME_CONTROLLER" -v service_name="$CONTROLLER_SERVICE" -v namespace="$CONTROLLER_NAMESPACE" '
         BEGIN {
             sep = ""
             for (i = 0; i < replicas; i++) {
@@ -428,8 +434,8 @@ data:
 
     # A comma separated list of directories under which to store log files
     log.dirs=((KAFKA_LOG_DIR))
-  timestamp: "2025-07-04T07:49:07Z"
+  timestamp: "2025-07-04T17:09:01Z"
 kind: ConfigMap
 metadata:
-  name: kafka-init-scripts
-  namespace: authentication
+  name: '{{ .Values.configMapName }}'
+  namespace: '{{ .Values.namespace }}'

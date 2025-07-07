@@ -1,0 +1,75 @@
+# Names
+appName: kafka-broker-node
+configMapName: kafka-init-scripts
+
+# Namespace
+namespace: authentication-kafka-broker
+
+# Replicas
+replicas: 3
+
+# Image
+image: apache/kafka:latest
+
+# Pod Settings
+pod:
+  image: apache/kafka:latest
+  containerName: kafka-container
+  port:
+    number: 9092
+    target: kafka-port 
+  resources:
+    enabled: false
+    requests:
+      cpu: "2"
+      memory: "4Gi"
+    limits:
+      cpu: "4"
+      memory: "8Gi"
+
+# Labels:
+labels:
+  custom:
+    # You can use any value from the values.yaml like "Values.CHOOSE_VALUE" and it will be replaced.
+    app: "Values.appName"
+
+  kubernetes:
+    io:
+       # You can use any value from the values.yaml like "Values.CHOOSE_VALUE" and it will be replaced.
+      app: "Values.appName"
+      component: db
+      instance: development
+
+# Kafka
+kafka:
+  broker:
+    listenerName: "CONTROLLER"
+    listener: "PLAINTEXT://0.0.0.0:9093"
+  settings:
+    offsetTopicReplicationFactor: "2"
+    transactionStateLogReplicationFactor: "2"
+    transactrionStateLogMinIsr: "2"
+    # numNetworkThreads:
+    # numIoThreads:
+    # socketSendBufferBytes:
+    # kafkaRecieveBufferBytes:
+    # kafkaRequestMaxBytes:
+    # kafkaNumPartitions:
+    # kafkaRecoveryThreadsPerDataDir:
+    # shareCoordinatorStateTopicReplicationFactor:
+    # shareCoordinatorStateTopicMincIsr:
+    # retentionHours:
+    # logSegmentBytes:
+    # retentionCheckIntervalMs:
+
+# Controller Data
+controller:
+  namespace: authentication-kafka-controller
+  serviceName: kafka-service-controller
+  podName: kafka-controller-node
+  replicas: 3
+
+service:
+  name: kafka-service-broker
+  port:
+    name: kafka

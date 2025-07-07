@@ -1,0 +1,133 @@
+{{- $ := . }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+    name: {{.Values.appName | quote}}
+    namespace: {{.Values.namespace}}
+spec:
+    replicas: {{.Values.replicas}}
+    selector:
+        matchLabels:
+        {{- include "global.commonMetadata" $ | nindent 12}}
+    serviceName: {{ .Values.service.name | quote}}
+    template:
+        metadata:
+            labels: 
+            {{- include "global.commonMetadata" $ | nindent 16}}
+        spec:
+            containers:
+                - name: {{.Values.pod.containerName}}
+                  image: {{.Values.pod.image}}
+                  
+                  lifecycle:
+                      preStop:
+                          exec:
+                              command: ['/bin/sh', '-c', '/mongodb-scripts/sh-tools.sh && /mongodb-scripts/lifecycle-prestop.sh']
+
+                  ports:
+                    - containerPort: {{ .Values.pod.port.number }}
+                      name: {{  trunc 15 .Values.pod.port.target | lower | quote }}
+                  command:
+                      - sh
+                      - -c
+
+                  # The following scripts start the mongodb node and automatically inject it into the replset.
+                  args:
+                    - |
+                        echo "Starting mongod..."
+                        mongod --quiet --bind_ip_all --replSet auth_rs --keyFile /etc/mongo-keyfile --auth &
+                        pid=$!
+
+                        echo "Waiting for mongod to be ready..."
+                        until mongosh --eval "db.adminCommand('ping')" > /dev/null 2>&1; do
+                        sleep 2
+                        done
+
+                        echo "Running init script..."
+                        chmod +x /mongodb-scripts/sh-tools.sh
+                        chmod +x /mongodb-scripts/init-cluster.sh
+                        chmod +x /mongodb-scripts/lifecycle-prestop.sh
+
+                        /mongodb-scripts/init-cluster.sh
+
+                        echo "Replica set initialized. Handing over to mongod..."
+                        wait $pid
+
+                  env:
+                      - name: MONGO_INITDB_ROOT_USERNAME
+                        valueFrom:
+                            secretKeyRef:
+                                name: mongo-cluster-secrets
+                                key: mongo-db-user
+
+                      - name: MONGO_INITDB_ROOT_PASSWORD
+                        valueFrom:
+                            secretKeyRef:
+                                name: mongo-cluster-secrets
+                                key: mongo-db-password
+
+                      - name: REPLICAS
+                        value: {{.Values.replicas | quote}}
+
+                      - name: POD_NAME
+                        value: {{.Values.appName | quote}}
+
+                      - name: POD_NAME_INDEX
+                        valueFrom:
+                            fieldRef:
+                                fieldPath: metadata.name
+
+                      - name: NAMESPACE
+                        valueFrom:
+                            fieldRef:
+                                fieldPath: metadata.namespace
+                
+                      - name: SERVICE_NAME
+                        value: {{ .Values.service.name | quote}}
+
+                      - name: CLUSTER_ID
+                        value: {{ default "rs" .Values.mongodb.settings.clusterID | quote }}
+
+                      - name: PORT
+                        value: {{ .Values.pod.port.number | quote}} 
+
+                  volumeMounts:
+                      - name: mongodb-volume
+                        mountPath: /data/db
+
+                      - name: keyfile-volume
+                        mountPath: /etc/mongo-keyfile
+                        subPath: mongo-secret-key
+                        readOnly: true
+
+                      - name: mongo-init-cluster
+                        mountPath: /mongodb-scripts
+                        readOnly: true
+
+                  {{- if .Values.pod.resources.enabled -}}
+                  resources:
+                      requests:
+                          memory: {{ default "2Gi" .Values.pod.resources.requests.memory | quote }}
+                          cpu: {{ default "1" .Values.pod.resources.requests.cpu | quote }}
+                      limits:
+                          memory: {{ default "4Gi" .Values.pod.resources.limits.memory | quote }}
+                          cpu: {{ default "2" .Values.pod.resources.limits.cpu | quote }}
+                  {{end}}
+            volumes:
+                - name: mongo-init-cluster
+                  configMap:
+                      name: {{ .Values.configMapName | quote }}
+                      defaultMode: 0755
+
+                - name: keyfile-volume
+                  secret:
+                      secretName: mongo-cluster-secrets
+                      defaultMode: 0400
+    volumeClaimTemplates:
+        - metadata:
+            name: mongodb-volume
+          spec:
+            accessModes: ['ReadWriteOnce']
+            resources:
+                requests:
+                    storage: 1Gi

@@ -72,8 +72,8 @@ build_kafka_configmap
 # Create redis config map
 build_redis_configmap
 
-# Run all clusters
-start_kafka_controller_cluster
-start_kafka_broker_cluster
-start_mongodb_cluster
-start_redis_cluster
+# # Run all clusters
+# start_kafka_controller_cluster
+# start_kafka_broker_cluster
+# start_mongodb_cluster
+# start_redis_cluster
