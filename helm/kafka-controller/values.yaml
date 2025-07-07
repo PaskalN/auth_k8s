@@ -10,38 +10,38 @@ replicas: 3
 
 # Labels:
 labels:
-  custom:
-    app: "Values.appName"
+    custom:
+        app: 'Values.appName'
 
-  kubernetes:
-    io:
-      app: "Values.appName"
-      component: db
-      instance: development
+    kubernetes:
+        io:
+            app: 'Values.appName'
+            component: db
+            instance: development
 
 # Kafka
 kafka:
-  controller:
-    listenerName: "CONTROLLER"
-    listener: "0.0.0.0:9093"
+    controller:
+        listenerName: 'CONTROLLER'
+        listener: '0.0.0.0:9093'
 
 # Pod Settings
 pod:
-  image: apache/kafka:latest
-  containerName: kafka-container
-  port:
-    number: 9093
-    target: kafka-port
-  resources:
-    enabled: false
-    requests:
-      cpu: "1"
-      memory: "2Gi"
-    limits:
-      cpu: "2"
-      memory: "4Gi"
+    image: apache/kafka:latest
+    containerName: kafka-container
+    port:
+        number: 9093
+        target: kafka-port
+    resources:
+        enabled: false
+        requests:
+            cpu: '1'
+            memory: '2Gi'
+        limits:
+            cpu: '2'
+            memory: '4Gi'
 
 service:
-  name: kafka-service-controller
-  port:
-    name: kafka
+    name: kafka-service-controller
+    port:
+        name: kafka

@@ -1,0 +1,9 @@
+// .vscode/settings.json (workspace-specific)
+// OR use Ctrl+Shift+P → "Preferences: Open Settings (JSON)" to set globally
+{
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.tabSize": 4,
+    "editor.detectIndentation": false,
+    "editor.insertSpaces": true
+}
