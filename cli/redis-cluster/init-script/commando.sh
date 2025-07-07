@@ -67,7 +67,7 @@ term_handler() {
 
 trap term_handler TERM
 
-Start Redis in background
+# Start Redis in background
 redis-server --port "$PORT" \
              --cluster-enabled yes \
              --cluster-config-file nodes.conf \

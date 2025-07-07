@@ -1,3 +1,4 @@
+# prettier-ignore-start
 {{- $ := . }}
 apiVersion: apps/v1
 kind: StatefulSet
@@ -131,3 +132,4 @@ spec:
             resources:
                 requests:
                     storage: 1Gi
+# prettier-ignore-end

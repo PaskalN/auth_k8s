@@ -1,13 +1,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-    name: {{ .Values.service.name }}
-    namespace: {{ .Values.namespace }}
+    name: '{{ .Values.service.name }}'
+    namespace: '{{ .Values.namespace }}'
 spec:
-    selector:
-        {{- include "global.commonMetadata" . | nindent 12 }}
+    # prettier-ignore
+    selector: {{- include "global.commonMetadata" . | nindent 12 }}
     ports:
-      - name: {{ .Values.service.port.name }}
-        port: {{ .Values.pod.port.number }}
-        targetPort: {{  trunc 15 .Values.pod.port.target | lower | quote }}
+        - name: "{{ .Values.service.port.name }}"
+          # prettier-ignore
+          port: {{ .Values.pod.port.number }}
+          # prettier-ignore
+          targetPort: {{ trunc 15 .Values.pod.port.target | lower | quote }}
     clusterIP: None

@@ -1,13 +1,27 @@
 apiVersion: v1
 data:
-  add_node.js: "function add_node(service_name, namespace, port) {\n\n    const hostname
-    = os.hostname;\n\n    try {\n        const host = `${hostname}.${service_name}.${namespace}.svc.cluster.local:${port}`
-    \       \n        rs.add(host)\n        print_green(`Node added: ${host}`)\n\n
-    \       return 'success';\n    } catch (err) {\n        if (err.codeName === 'NewReplicaSetConfigurationIncompatible')
-    {\n            print_red('The node is already part of the set.')\n            return
-    'exists';\n        } else {\n            print_red(`${JSON.stringify(err)}`)\n\n
-    \           print_red('Retring in 10 sec')\n            return 'error';\n        }\n
-    \   }\n}\n"
+  add_node.js: |
+    function add_node(service_name, namespace, port) {
+        const hostname = os.hostname;
+
+        try {
+            const host = `${hostname}.${service_name}.${namespace}.svc.cluster.local:${port}`;
+            rs.add(host);
+            print_green(`Node added: ${host}`);
+
+            return 'success';
+        } catch (err) {
+            if (err.codeName === 'NewReplicaSetConfigurationIncompatible') {
+                print_red('The node is already part of the set.');
+                return 'exists';
+            } else {
+                print_red(`${JSON.stringify(err)}`);
+
+                print_red('Retring in 10 sec');
+                return 'error';
+            }
+        }
+    }
   init-cluster.sh: "#!/bin/bash\n\nset -e\n\n\n\nMOUNT_MOINT=\"/mongodb-scripts\"\nADD_NODE_SCRIPT=\"$MOUNT_MOINT/add_node.js\"\nADD_INIT_CLUSTER_SCRIPT=\"$MOUNT_MOINT/init_cluster.js\"\nINIT_TOOLS_JS=\"$MOUNT_MOINT/tools.js\"\n\n.
     \"$MOUNT_MOINT/sh-tools.sh\"\n\nprint_green \"CLUSTER INIT BEGIN!\" 1\n\nsleep
     10\n\nCLEAN_USER=$(echo -n \"$MONGO_INITDB_ROOT_USERNAME\" | tr -d '\\n')\nCLEAN_PASS=$(echo
@@ -42,29 +56,63 @@ data:
     ' + path);\n            load(path);\n\n            init('${CLUSTER_ID}', '${REPLICAS}',
     '${POD_NAME}', '${SERVICE_NAME}', '${NAMESPACE}', '${PORT}', '${CLEAN_USER}',
     '${CLEAN_PASS}')\n        \"\n    fi\n}\n\n# START\ninit\n\n# RECHECK\nadd_to_cluster\n"
-  init_cluster.js: "function init(cluster_id, replicas, pod_name, service_name, namespace,
-    port, user, pass) {\n\n    try {\n        const members = Array(parseInt(replicas)).fill(null).map((_,
-    index) => {\n            return {\n                _id: index,\n                host:
-    `${pod_name}-${index}.${service_name}.${namespace}.svc.cluster.local:${port}`\n
-    \           }\n        })\n\n        print_green(`MongoDB Cluster Members: ${JSON.stringify(members)}`)\n\n
-    \       let success = false;\n        while (!success) {\n            try {\n
-    \               rs.initiate({\n                    _id: cluster_id,\n                    members:
-    members\n                });\n                print_green(`Replica set initiated
-    successfully`);\n\n                while (!db.isMaster().ismaster) {\n                    print_yellow('MongoDB
-    Cluster: Waiting for primary election...')\n                    sleep(2000);\n
-    \               }\n\n                adminDB = db.getSiblingDB('admin');\n                adminDB.createUser({\n
-    \                   user: user,\n                    pwd: pass,\n                    roles:
-    [{ role: 'root', db: 'admin' }]\n                });\n\n                print_green('MongoDB
-    Admin user created!')\n\n                success = true;\n\n            } catch
-    (e) {\n                if (e.codeName === 'AlreadyInitialized' || e.codeName ===
-    'Unauthorized') {\n                    print_yellow(`MONGODB WARNING: ${e.codeName
-    || e.message}`)\n                    success = true;\n                } else {\n
-    \                   print_red(`MONGODB ERROR: ${e.codeName || e.message}`)\n                }\n\n
-    \               sleep(3500);\n            }\n        }       \n    } catch (e)
-    {\n        if (e.codeName === 'AlreadyInitialized' || e.codeName === 'Unauthorized')
-    {\n            print_yellow(`MONGODB WARNING: ${e.codeName || e.message}`)\n        }
-    else {\n            print_red(`MONGODB ERROR: ${e.codeName || e.message}`)\n        }\n
-    \   }\n}\n"
+  init_cluster.js: |
+    function init(cluster_id, replicas, pod_name, service_name, namespace, port, user, pass) {
+        try {
+            const members = Array(parseInt(replicas))
+                .fill(null)
+                .map((_, index) => {
+                    return {
+                        _id: index,
+                        host: `${pod_name}-${index}.${service_name}.${namespace}.svc.cluster.local:${port}`
+                    };
+                });
+
+            print_green(`MongoDB Cluster Members: ${JSON.stringify(members)}`);
+
+            let success = false;
+            while (!success) {
+                try {
+                    rs.initiate({
+                        _id: cluster_id,
+                        members: members
+                    });
+                    print_green(`Replica set initiated successfully`);
+
+                    while (!db.isMaster().ismaster) {
+                        print_yellow('MongoDB Cluster: Waiting for primary election...');
+                        sleep(2000);
+                    }
+
+                    adminDB = db.getSiblingDB('admin');
+                    adminDB.createUser({
+                        user: user,
+                        pwd: pass,
+                        roles: [{ role: 'root', db: 'admin' }]
+                    });
+
+                    print_green('MongoDB Admin user created!');
+
+                    success = true;
+                } catch (e) {
+                    if (e.codeName === 'AlreadyInitialized' || e.codeName === 'Unauthorized') {
+                        print_yellow(`MONGODB WARNING: ${e.codeName || e.message}`);
+                        success = true;
+                    } else {
+                        print_red(`MONGODB ERROR: ${e.codeName || e.message}`);
+                    }
+
+                    sleep(3500);
+                }
+            }
+        } catch (e) {
+            if (e.codeName === 'AlreadyInitialized' || e.codeName === 'Unauthorized') {
+                print_yellow(`MONGODB WARNING: ${e.codeName || e.message}`);
+            } else {
+                print_red(`MONGODB ERROR: ${e.codeName || e.message}`);
+            }
+        }
+    }
   lifecycle-prestop.sh: "#!/bin/bash\n\nset -e\n\nMOUNT_MOINT=\"/mongodb-scripts\"\nPRESTOP_SCRIPT=\"$MOUNT_MOINT/prestop.js\"\nJS_TOOLS=\"$MOUNT_MOINT/tools.js\"\n\n.
     \"$MOUNT_MOINT/sh-tools.sh\"\n\nremove_from_cluster() {\n    CLEAN_USER=$(echo
     -n \"$MONGO_INITDB_ROOT_USERNAME\" | tr -d '\\n')\n    CLEAN_PASS=$(echo -n \"$MONGO_INITDB_ROOT_PASSWORD\"
@@ -76,11 +124,24 @@ data:
     \"Removing the node....\"\necho \"=================================\"\n\nsleep
     2\n\nremove_from_cluster\n\necho \"=================================\"\necho \"Removed\"\necho
     \"=================================\"\n\nsleep 2\n"
-  prestop.js: "function removeFromCluster(pod_dns) {\n    try {\n        rs.remove(pod_dns)\n
-    \       print_green(`Node removed: ${pod_dns}`)\n\n        cfg = rs.conf();\n
-    \       cfg.version++\n        rs.reconfig(cfg, {force: true});\n\n        print_green(`Reconfiguring!`)\n\n
-    \       return 'success';\n    } catch (err) {\n        print_red(`JSON.stringify(err)`)\n
-    \       return 'error';                    \n    }\n}"
+  prestop.js: |
+    function removeFromCluster(pod_dns) {
+        try {
+            rs.remove(pod_dns);
+            print_green(`Node removed: ${pod_dns}`);
+
+            cfg = rs.conf();
+            cfg.version++;
+            rs.reconfig(cfg, { force: true });
+
+            print_green(`Reconfiguring!`);
+
+            return 'success';
+        } catch (err) {
+            print_red(`JSON.stringify(err)`);
+            return 'error';
+        }
+    }
   sh-tools.sh: "#!/bin/bash\n\nset -e\n\n# Green Printer\n# =============\nprint_green()
     {\n    TEXT=$1\n    BORDER=${2:-0}\n\n    if [ \"$BORDER\" -eq 1 ]; then\n        printf
     \"\\n\" \n        printf \"\\033[0;32m %s \\033[0m\" \"=====================================\"
@@ -115,21 +176,52 @@ data:
     \"$REPLICAS\" ]; do\n        DNS_SET=\"${DNS_SET}${SEP}${POD_NAME}-${index}.${SERVICE_NAME}.${NAMESPACE}.svc.cluster.local:${PORT}\"\n
     \       index=$((index + 1))\n        SEP=\" \"\n    done\n\n    echo \"$DNS_SET\"
     \n}"
-  timestamp: "2025-07-06T07:17:45Z"
-  tools.js: "function print_green(message) {\n    const color = '\\x1b[32m';\n    const
-    reset = '\\x1b[0m';\n    const line = '=====================================================';\n
-    \   \n    print(color + line + reset);\n    print(color + ` ${message} ` + reset);\n
-    \   print(color + line + reset);\n}\n\nfunction print_blue(message) {\n    const
-    color = '\\x1b[34m';\n    const reset = '\\x1b[0m';\n    const line = '=====================================================';\n
-    \   \n    print(color + line + reset);\n    print(color + ` ${message} ` + reset);\n
-    \   print(color + line + reset);\n}\n\nfunction print_yellow(message) {\n    const
-    color = '\\x1b[33m';\n    const reset = '\\x1b[0m';\n    const line = '=====================================================';\n
-    \   \n    print(color + line + reset);\n    print(color + ` ${message} ` + reset);\n
-    \   print(color + line + reset);\n}\n\nfunction print_red(message) {\n    const
-    color = '\\x1b[31m';\n    const reset = '\\x1b[0m';\n    const line = '=====================================================';\n
-    \   \n    print(color + line + reset);\n    print(color + ` ${message} ` + reset);\n
-    \   print(color + line + reset);\n}\n\nfunction sleep(ms) {\n    const start =
-    Date.now();\n    while (Date.now() - start < ms) {}\n}"
+  timestamp: "2025-07-07T15:50:09Z"
+  tools.js: |
+    function print_green(message) {
+        const color = '\x1b[32m';
+        const reset = '\x1b[0m';
+        const line = '=====================================================';
+
+        print(color + line + reset);
+        print(color + ` ${message} ` + reset);
+        print(color + line + reset);
+    }
+
+    function print_blue(message) {
+        const color = '\x1b[34m';
+        const reset = '\x1b[0m';
+        const line = '=====================================================';
+
+        print(color + line + reset);
+        print(color + ` ${message} ` + reset);
+        print(color + line + reset);
+    }
+
+    function print_yellow(message) {
+        const color = '\x1b[33m';
+        const reset = '\x1b[0m';
+        const line = '=====================================================';
+
+        print(color + line + reset);
+        print(color + ` ${message} ` + reset);
+        print(color + line + reset);
+    }
+
+    function print_red(message) {
+        const color = '\x1b[31m';
+        const reset = '\x1b[0m';
+        const line = '=====================================================';
+
+        print(color + line + reset);
+        print(color + ` ${message} ` + reset);
+        print(color + line + reset);
+    }
+
+    function sleep(ms) {
+        const start = Date.now();
+        while (Date.now() - start < ms) {}
+    }
 kind: ConfigMap
 metadata:
   name: '{{ .Values.configMapName }}'

@@ -10,37 +10,37 @@ replicas: 3
 
 # Labels:
 labels:
-  custom:
-    app: "Values.appName"
+    custom:
+        app: 'Values.appName'
 
-  kubernetes:
-    io:
-      app: "Values.appName"
-      component: db
-      instance: development
+    kubernetes:
+        io:
+            app: 'Values.appName'
+            component: db
+            instance: development
 
 # Mongodb
 mongodb:
-  settings:
-    clusterID: "auth_rs"
+    settings:
+        clusterID: 'auth_rs'
 
 # Pod Settings
 pod:
-  image: mongo
-  containerName: mongodb-container
-  port:
-    number: 27017
-    target: mongodb-port
-  resources:
-    enabled: false
-    requests:
-      cpu: "1"
-      memory: "2Gi"
-    limits:
-      cpu: "2"
-      memory: "4Gi"
+    image: mongo
+    containerName: mongodb-container
+    port:
+        number: 27017
+        target: mongodb-port
+    resources:
+        enabled: false
+        requests:
+            cpu: '1'
+            memory: '2Gi'
+        limits:
+            cpu: '2'
+            memory: '4Gi'
 
 service:
-  name: mongodb-service-controller
-  port:
-    name: mongodb
+    name: mongodb-service-controller
+    port:
+        name: mongodb
