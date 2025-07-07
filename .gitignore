@@ -1,0 +1,4 @@
+# The initial files are also commited
+/tmp/
+
+# We can ignore secrets but they are commited for test purpouse.

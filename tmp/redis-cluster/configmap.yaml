@@ -232,15 +232,16 @@ data:
     for prestop to finish...\"\n    while [ ! -f /tmp/prestop-done ]; do\n        sleep
     1\n    done\n    echo \"[Entrypoint] Prestop completed. Sending SIGTERM to Redis...\"\n
     \   kill -TERM \"$REDIS_PID\"\n}\n\ntrap term_handler TERM\n\n# Start Redis in
-    background\n# redis-server --port \"$PORT\" \\\n#              --cluster-enabled
-    yes \\\n#              --cluster-config-file nodes.conf \\\n#              --cluster-node-timeout
-    \"$CLUSTER_NODE_TIMEOUT\" \\\n#              --appendonly yes &\n\n# redis-server
-    --port 0 \\\n#              --tls-port \"$PORT\" \\\n#              --tls-cert-file
-    \"/tls/tls.crt\" \\\n#              --tls-key-file \"/tls/tls.key\" \\\n#              --tls-ca-cert-file
-    \"/tls/ca.crt\" \\\n#              --tls-auth-clients \"yes\" \\\n#              --cluster-enabled
-    yes \\\n#              --cluster-config-file nodes.conf \\\n#              --cluster-node-timeout
-    \"$CLUSTER_NODE_TIMEOUT\" \\\n#              --appendonly yes &\n\n# REDIS_PID=$!\n\n#
-    Wait for Redis\nwhile kill -0 \"$REDIS_PID\" 2>/dev/null; do\n    wait \"$REDIS_PID\"\ndone"
+    background\nredis-server --port \"$PORT\" \\\n             --cluster-enabled yes
+    \\\n             --cluster-config-file nodes.conf \\\n             --cluster-node-timeout
+    \"$CLUSTER_NODE_TIMEOUT\" \\\n             --appendonly yes &\n\n# !!!!!!!!!!!!!
+    TO DO !!!!!!!!!!!!!\n# redis-server --port 0 \\\n#              --tls-port \"$PORT\"
+    \\\n#              --tls-cert-file \"/tls/tls.crt\" \\\n#              --tls-key-file
+    \"/tls/tls.key\" \\\n#              --tls-ca-cert-file \"/tls/ca.crt\" \\\n#              --tls-auth-clients
+    \"yes\" \\\n#              --cluster-enabled yes \\\n#              --cluster-config-file
+    nodes.conf \\\n#              --cluster-node-timeout \"$CLUSTER_NODE_TIMEOUT\"
+    \\\n#              --appendonly yes &\n\nREDIS_PID=$!\n\n# Wait for Redis\nwhile
+    kill -0 \"$REDIS_PID\" 2>/dev/null; do\n    wait \"$REDIS_PID\"\ndone"
   default_cluster.sh: "#!/bin/sh\n\n# For Debug\n# set -x\nset -e\n\n# Check if the
     current node persists in the cluster\n# ==================================================\nis_node_in_cluster()
     {\n    port=$1\n    output=$(redis-cli -p \"$port\" cluster info 2>/dev/null |
@@ -619,7 +620,7 @@ data:
     remove_pod_from_cluster  >> "$LOG_FILE" 2>&1
 
     touch /tmp/prestop-done
-  timestamp: "2025-07-07T14:34:04Z"
+  timestamp: "2025-07-07T15:50:09Z"
 kind: ConfigMap
 metadata:
   name: '{{ .Values.configMapName }}'
