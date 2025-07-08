@@ -8,6 +8,9 @@ namespace: authentication-kafka-controller
 # Replicas
 replicas: 3
 
+# Debug
+debug: true
+
 # Labels:
 labels:
     custom:
