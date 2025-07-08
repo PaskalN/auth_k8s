@@ -1,3 +1,30 @@
+# Notes: Jul 8 2025
+## Project Upgrade
+Helm files for each cluster
+
+Better sh generators
+
+Introducing cluster.sh | automate_cli
+- usage: ```./cluster.sh --cluster [mongodb, redis, kafka, all] --action [start, stop] --preset [OPTIONAL: true]```
+- --cluster = select which cluster/s to be started. E.G: ```--cluster redis,kafka``` or all ```--cluster all```
+- --action = ```start``` - run the cluster up; ```stop``` - setdown the cluster
+- --preset = ```--preset true``` generates all additional values files, certificates and uuids. The output can be seen in ```tml``` dir. After generation process, the generated files are distributed across helm clusters.
+
+Note: Once ```--preset true``` you don't need to build it again. Use just ```./cluster.sh --cluster [mongodb, redis, kafka, all] --action [start, stop]```
+
+## Screen Logs
+- ```./cluster --cluster all --action start --preset true```
+
+![Alt text](screen_logs/s2.png)
+
+- ```./cluster --cluster all --action stop```
+
+![Alt text](screen_logs/s2.png)
+
+- ```Docker Desktop```
+
+![Alt text](screen_logs/s3.png)
+
 # K8s Cluster Setup for Kafka KRaft, MongoDB, and Redis
 
 ## Project Overview
