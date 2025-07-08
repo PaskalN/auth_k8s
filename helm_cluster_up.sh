@@ -5,6 +5,12 @@ set -e
 cd "$(dirname "$0")"
 
 # 1. Generate all additional values
+echo "Generating Kafka UUIDs..."
+cli/kafka-cluster/init_script/generate_uuid_values.sh
+
+echo "Generating Kafka config..."
+cli/kafka-cluster/init_script/create_config.sh
+
 echo "Generating Mongo keyfiles..."
 cli/mongo-cluster/generate_keyfiles.sh
 

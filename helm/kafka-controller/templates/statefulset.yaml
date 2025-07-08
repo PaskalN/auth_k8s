@@ -31,6 +31,9 @@ spec:
                       - name: REPLICAS
                         value: {{.Values.replicas | quote}}
 
+                      - name: DEBUG
+                        value: {{default "" .Values.debug | quote}}
+
                       - name: POD_NAME_INDEX
                         valueFrom:
                             fieldRef:

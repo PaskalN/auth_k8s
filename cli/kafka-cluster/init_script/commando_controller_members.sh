@@ -7,25 +7,25 @@ POD_NAME="${POD_NAME_INDEX%-[0-9]*}"
 
 # POD_NAME CHECKER
 if [ -z "$POD_NAME" ]; then
-    echo "POD_NAME is missing: Please privide value!"
+    print_red "POD_NAME is missing: Please privide value!" 1
     exit 1
 fi
 
 # SERVICE_NAME CHECKER
 if [ -z "$SERVICE_NAME" ]; then
-    echo "SERVICE_NAME is missing: Please privide value!"
+    print_red "SERVICE_NAME is missing: Please privide value!" 1
     exit 1
 fi
 
 # NAMESPACE CHECKER
 if [ -z "$NAMESPACE" ]; then
-    echo "NAMESPACE is missing: Please privide value!"
+    print_red "NAMESPACE is missing: Please privide value!" 1
     exit 1
 fi
 
 # REPLICAS CHECKER
 if [ -z "$REPLICAS" ]; then
-    echo "REPLICAS is missing: Please privide value!"
+    print_red "REPLICAS is missing: Please privide value!" 1
     exit 1
 fi
 
