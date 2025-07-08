@@ -6,37 +6,37 @@ set -e
 # CONTROLLER SETUP
 # POD_NAME CHECKER
 if [ -z "$POD_NAME_CONTROLLER" ]; then
-    echo "POD_NAME_CONTROLLER is missing: Please privide value!"
+    print_red "POD_NAME_CONTROLLER is missing: Please privide value!" 1
     exit 1
 fi
 
 # SERVICE_NAME CHECKER
 if [ -z "$SERVICE_NAME" ]; then
-    echo "SERVICE_NAME is missing: Please privide value!"
+    print_red "SERVICE_NAME is missing: Please privide value!" 1
     exit 1
 fi
 
 # NAMESPACE CHECKER
 if [ -z "$NAMESPACE" ]; then
-    echo "NAMESPACE is missing: Please privide value!"
+    print_red "NAMESPACE is missing: Please privide value!" 1
     exit 1
 fi
 
 # CONTROLLER_NAMESPACE CHECKER
 if [ -z "$CONTROLLER_NAMESPACE" ]; then
-    echo "CONTROLLER_NAMESPACE is missing: Please privide value!"
+    print_red "CONTROLLER_NAMESPACE is missing: Please privide value!" 1
     exit 1
 fi
 
 # CONTROLLER_REPLICAS CHECKER
 if [ -z "$CONTROLLER_REPLICAS" ]; then
-    echo "CONTROLLER_REPLICAS is missing: Please privide value!"
+    print_red "CONTROLLER_REPLICAS is missing: Please privide value!" 1
     exit 1
 fi
 
 # CONTROLLER_SERVICE CHECKER
 if [ -z "$CONTROLLER_SERVICE" ]; then
-    echo "CONTROLLER_SERVICE is missing: Please privide value!"
+    print_red "CONTROLLER_SERVICE is missing: Please privide value!" 1
     exit 1
 fi
 
@@ -59,12 +59,12 @@ KAFKA_NODE_ID=$(( ${POD_NAME_INDEX##*-} + 1 ))
 POD_NAME="${POD_NAME_INDEX%-[0-9]*}"
 
 if [ -z "$POD_NAME" ]; then
-    echo "POD_NAME is missing: Please privide value!"
+    print_red "POD_NAME is missing: Please privide value!" 1
     exit 1
 fi
 
 if [ -z "$REPLICAS" ]; then
-    echo "REPLICAS is missing: Please privide value!"
+    print_red "REPLICAS is missing: Please privide value!" 1
     exit 1
 fi
 
@@ -82,10 +82,11 @@ KAFKA_BROKER_SET_MEMBERS=$(
   '
 )
 
-echo "KAFKA_CONTROLLER_SET_MEMBERS: $KAFKA_CONTROLLER_SET_MEMBERS"
-echo "KAFKA_BROKER_SET_MEMBERS: $KAFKA_BROKER_SET_MEMBERS"
-echo "KAFKA_NODE_ID: $KAFKA_NODE_ID"
-echo "POD_NAME: $POD_NAME"
+print_green "KAFKA_CONTROLLER_SET_MEMBERS: $KAFKA_CONTROLLER_SET_MEMBERS" 1
+print_green "KAFKA_CONTROLLER_SET_MEMBERS: $KAFKA_CONTROLLER_SET_MEMBERS"
+print_green "KAFKA_BROKER_SET_MEMBERS: $KAFKA_BROKER_SET_MEMBERS"
+print_green "KAFKA_NODE_ID: $KAFKA_NODE_ID"
+print_green "POD_NAME: $POD_NAME"
 
 export KAFKA_BROKER_SET_MEMBERS
 export KAFKA_NODE_ID

@@ -1,4 +1,8 @@
 # The initial files are also commited
 /tmp/
-
+tmp
+**/templates/configmap.yaml
+**/templates/configmap.yaml
+**/values_secrets.yaml
+**/values_uuids.yaml
 # We can ignore secrets but they are commited for test purpouse.
