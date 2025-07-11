@@ -1,0 +1,78 @@
+# Names
+appName: localhost-node1
+
+# Namespace
+namespace: localhost-node-app
+
+configMapName: localhost-config
+
+# Replicas
+replicas: 1
+
+# Labels:
+labels:
+    custom:
+        app: 'Values.appName'
+
+    kubernetes:
+        io:
+            app: 'Values.appName'
+            component: db
+            instance: development
+
+# Pod Settings
+pod:
+    image: nginx:stable-perl
+    containerName: localhost-container
+    port:
+        number: 80
+        target: localhost-port
+    resources:
+        enabled: false
+        requests:
+            cpu: '1'
+            memory: '2Gi'
+        limits:
+            cpu: '2'
+            memory: '4Gi'
+
+# Service settings
+service:
+    name: localhost-service
+    port:
+        name: localhost
+
+services:
+    nginx:
+        protocol: 'http'
+        serviceName: 'nginx-app-service'
+        namespace: 'nginx-app-ns'
+        port: 80
+
+nginx:
+    settings:
+        user: nginx
+        worker_processes: auto
+    events:
+        worker_connections: 1024
+    paths:
+        error_log: /var/log/nginx/error.log
+        access_log: /var/log/nginx/access.log
+        dir_path: /etc/nginx
+        nginx_dir_path: /etc/nginx/includes
+        server_ports: 'construct[Values.nginx.paths.nginx_dir_path, /ports.conf]'
+        server_locations: 'construct[Values.nginx.paths.nginx_dir_path, /locations.conf]'
+        mime_types: 'construct[Values.nginx.paths.dir_path, /mime.types]'
+        pid: /run/nginx.pid
+    types:
+        default: application/octet-stream
+    server:
+        ports:
+            - 80
+            - 9227
+        locations:
+            - path: /
+              proxy_pass: 'construct[Values.services.nginx.protocol, ://, Values.services.nginx.serviceName, ., Values.services.nginx.namespace, ., svc.cluster.local:, Values.services.nginx.port]'
+              proxy_set_headers:
+                  - Host $host
+                  - X-Real-IP $remote_addr

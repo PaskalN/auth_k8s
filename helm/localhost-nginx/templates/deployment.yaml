@@ -1,0 +1,56 @@
+# prettier-ignore-start
+{{- $ := . }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: {{.Values.appName | quote}}
+    namespace: {{.Values.namespace}}
+spec:
+    replicas: {{.Values.replicas}}
+    selector:
+        matchLabels:
+        {{- include "global.commonMetadata" $ | nindent 12}}
+    template:
+        metadata:
+            labels: 
+            {{- include "global.commonMetadata" $ | nindent 16}}
+        spec:            
+            containers:
+              - name: {{.Values.pod.containerName}}
+
+                image: {{.Values.pod.image}}
+
+                imagePullPolicy: IfNotPresent
+
+                lifecycle:
+                      postStart:
+                          exec:
+                              command: 
+                                - /bin/sh
+                                - -c
+                                - |
+                                    cp /etc/nginx/includes/nginx.conf /etc/nginx/nginx.conf
+                                    
+                                    while ! nginx -T >/dev/null 2>&1; do
+                                        echo $(nginx -T)
+                                        sleep 5
+                                    done
+
+                                    nginx -s reload
+
+                ports:
+                  - containerPort: {{ .Values.pod.port.number }}
+                    name: {{  trunc 15 .Values.pod.port.target | lower | quote }}
+
+                volumeMounts:
+                    - name: localhost-scripts
+                      mountPath: {{ .Values.nginx.paths.nginx_dir_path }}
+                      readOnly: true
+
+            volumes:
+                - name: localhost-scripts
+                  configMap:
+                      name: {{ .Values.configMapName }}
+                      defaultMode: 0755
+
+# prettier-ignore-end
