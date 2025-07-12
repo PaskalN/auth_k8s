@@ -25,8 +25,8 @@ pod:
     image: nginx:stable-perl
     containerName: nginx-container
     port:
-        number: 80
-        forward_number: 80
+        number: 443
+        forward_number: 443
         target: nginx-port
         service_name: http
     port_debug:
@@ -83,3 +83,4 @@ nginx:
               proxy_set_headers:
                   - Host $host
                   - X-Real-IP $remote_addr
+                  - X-Forwarded-Proto $scheme

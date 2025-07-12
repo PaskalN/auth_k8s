@@ -46,14 +46,23 @@ spec:
                     name: {{  trunc 15 .Values.pod.port_debug.target | lower | quote }}
 
                 volumeMounts:
-                    - name: localhost-scripts
+                    - name: nginx-scripts
                       mountPath: {{ .Values.nginx.paths.nginx_dir_path }}
                       readOnly: true
 
+                    - name: nginx-secrets-secrets
+                      mountPath: /etc/nginx/ssl
+                      readOnly: true
+
             volumes:
-                - name: localhost-scripts
+                - name: nginx-scripts
                   configMap:
                       name: {{ .Values.configMapName }}
                       defaultMode: 0755
+
+                - name: nginx-secrets-secrets
+                  secret:
+                      secretName: nginx-secrets
+                      defaultMode: 0400
 
 # prettier-ignore-end

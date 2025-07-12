@@ -12,7 +12,7 @@ HELM_DIR="$SCRIPT_PATH/helm"
 
 install_helm_localhost() {
     print_green "Starting Localhost Nginx ..." 1
-    HELM_COMMAND="helm upgrade --install localhost-nginx $HELM_DIR/localhost-nginx/ --values $HELM_DIR/localhost-nginx/values.yaml"
+    HELM_COMMAND="helm upgrade --install localhost-nginx $HELM_DIR/localhost-nginx/ --values $HELM_DIR/localhost-nginx/values.yaml --values $HELM_DIR/localhost-nginx/values_secrets.yaml"
     
     MAX_ATTEMPTS=5
     ATTEMPT=1

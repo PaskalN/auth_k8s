@@ -50,10 +50,20 @@ spec:
                       mountPath: {{ .Values.nginx.paths.nginx_dir_path }}
                       readOnly: true
 
+                    - name: localhost-secrets-secrets
+                      mountPath: /etc/nginx/ssl
+                      readOnly: true
+
             volumes:
                 - name: localhost-scripts
                   configMap:
                       name: {{ .Values.configMapName }}
                       defaultMode: 0755
+
+                - name: localhost-secrets-secrets
+                  secret:
+                      secretName: localhost-secrets
+                      defaultMode: 0400
+                      
 
 # prettier-ignore-end

@@ -12,7 +12,7 @@ HELM_DIR="$SCRIPT_PATH/helm"
 
 install_helm_nginx_cluster() {
     print_green "Starting Nginx Cluster ..." 1
-    HELM_COMMAND="helm upgrade --install nginx-cluster $HELM_DIR/nginx-cluster/ --values $HELM_DIR/nginx-cluster/values.yaml"
+    HELM_COMMAND="helm upgrade --install nginx-cluster $HELM_DIR/nginx-cluster/ --values $HELM_DIR/nginx-cluster/values.yaml --values $HELM_DIR/nginx-cluster/values_secrets.yaml"
     
     MAX_ATTEMPTS=5
     ATTEMPT=1
