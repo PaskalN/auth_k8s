@@ -26,10 +26,16 @@ pod:
     containerName: localhost-container
     port:
         number: 80
-        target: localhost-port
+        forward_number: 80
+        target: lh-port
+        service_name: http
+        nodePort: 30007
     port_debug:
         number: 9229
-        target: port-debug
+        forward_number: 9229
+        target: lh-debug-port
+        service_name: debug
+        nodePort: 30008
     resources:
         enabled: false
         requests:
@@ -42,8 +48,6 @@ pod:
 # Service settings
 service:
     name: localhost-service
-    port:
-        name: localhost
 
 services:
     nginx:

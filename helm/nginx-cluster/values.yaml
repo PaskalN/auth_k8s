@@ -26,7 +26,14 @@ pod:
     containerName: nginx-container
     port:
         number: 80
+        forward_number: 80
         target: nginx-port
+        service_name: http
+    port_debug:
+        number: 9229
+        forward_number: 9229
+        target: debug-port
+        service_name: debug
     resources:
         enabled: false
         requests:
@@ -39,8 +46,6 @@ pod:
 # Service settings
 service:
     name: nginx-app-service
-    port:
-        name: nginx
 
 services:
     app:
