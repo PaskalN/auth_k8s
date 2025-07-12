@@ -10,7 +10,7 @@ HELM_DIR="$SCRIPT_PATH/helm"
 
 install_helm_kafka_controller() {
     print_green "Starting Kafka Controller Cluster ..." 1
-    HELM_COMMAND="helm install kafka-controller $HELM_DIR/kafka-controller/ --values $HELM_DIR/kafka-controller/values.yaml --values $HELM_DIR/kafka-controller/values_uuids.yaml"
+    HELM_COMMAND="helm upgrade --install kafka-controller $HELM_DIR/kafka-controller/ --values $HELM_DIR/kafka-controller/values.yaml --values $HELM_DIR/kafka-controller/values_uuids.yaml"
     
     MAX_ATTEMPTS=5
     ATTEMPT=1
@@ -67,7 +67,7 @@ uninstall_helm_kafka_controller() {
 
 install_helm_kafka_broker() {
     print_green "Starting Kafka Broker Cluster ..." 1
-    HELM_COMMAND="helm install kafka-broker $HELM_DIR/kafka-broker/ --values $HELM_DIR/kafka-broker/values.yaml --values $HELM_DIR/kafka-broker/values_uuids.yaml"
+    HELM_COMMAND="helm upgrade --install kafka-broker $HELM_DIR/kafka-broker/ --values $HELM_DIR/kafka-broker/values.yaml --values $HELM_DIR/kafka-broker/values_uuids.yaml"
     
     MAX_ATTEMPTS=5
     ATTEMPT=1
