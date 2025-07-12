@@ -12,7 +12,7 @@ HELM_DIR="$SCRIPT_PATH/helm"
 
 install_helm_mongodb() {
     print_green "Starting MongoDB Cluster ..." 1
-    HELM_COMMAND="helm install mongo-cluster $HELM_DIR/mongodb-cluster/ --values $HELM_DIR/mongodb-cluster/values.yaml --values $HELM_DIR/mongodb-cluster/values_secrets.yaml"
+    HELM_COMMAND="helm upgrade --install mongo-cluster $HELM_DIR/mongodb-cluster/ --values $HELM_DIR/mongodb-cluster/values.yaml --values $HELM_DIR/mongodb-cluster/values_secrets.yaml"
     
     MAX_ATTEMPTS=5
     ATTEMPT=1

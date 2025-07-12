@@ -10,7 +10,7 @@ HELM_DIR="$SCRIPT_PATH/helm"
 
 install_helm_redis() {
     print_green "Starting Redis Cluster ..." 1
-    HELM_COMMAND="helm install redis-cluster $HELM_DIR/redis-cluster/ --values $HELM_DIR/redis-cluster/values.yaml --values $HELM_DIR/redis-cluster/values_secrets.yaml"
+    HELM_COMMAND="helm upgrade --install redis-cluster $HELM_DIR/redis-cluster/ --values $HELM_DIR/redis-cluster/values.yaml --values $HELM_DIR/redis-cluster/values_secrets.yaml"
     
     MAX_ATTEMPTS=5
     ATTEMPT=1

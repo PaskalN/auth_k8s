@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Service
+metadata:
+    name: '{{ .Values.service.name }}'
+    namespace: '{{ .Values.namespace }}'
+spec:
+    # prettier-ignore
+    selector: {{- include "global.commonMetadata" . | nindent 8 }}
+    ports:
+        - name: {{ .Values.pod.port.service_name }}
+          protocol: TCP
+          # prettier-ignore
+          port: {{ .Values.pod.port.forward_number }}
+          # prettier-ignore
+          targetPort: {{ trunc 15 .Values.pod.port.target | lower | quote }}
+          nodePort: {{ .Values.pod.port.nodePort }}
+
+        - name: {{ .Values.pod.port_debug.service_name }}
+          protocol: TCP
+          # prettier-ignore
+          port: {{ .Values.pod.port_debug.forward_number }}
+          # prettier-ignore
+          targetPort: {{ trunc 15 .Values.pod.port_debug.target | lower | quote }}
+          nodePort: {{ .Values.pod.port_debug.nodePort }}
+
+    type: NodePort
