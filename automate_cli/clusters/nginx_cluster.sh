@@ -19,7 +19,7 @@ install_helm_nginx_cluster() {
     SUCCESS=false
 
     until $SUCCESS || [ $ATTEMPT -gt $MAX_ATTEMPTS ]; do
-        echo "Attempt $ATTEMPT of $MAX_ATTEMPTS to install MongoDB..."
+        echo "Attempt $ATTEMPT of $MAX_ATTEMPTS to install Nginx Cluster..."
         if $HELM_COMMAND; then
             print_green "Nginx Cluster started successfully!"
             SUCCESS=true

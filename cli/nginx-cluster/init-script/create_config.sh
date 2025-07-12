@@ -14,6 +14,7 @@ mkdir -p "$EXPORT_FILE_PATH"
     --from-file=nginx.conf \
     --from-file=ports.conf \
     --from-file=locations.conf \
+    --from-file=stream.conf \
     --namespace="{{ .Values.namespace }}" \
     --from-literal=timestamp="$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
     --dry-run=client -o yaml | 

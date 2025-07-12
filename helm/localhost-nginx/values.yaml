@@ -27,6 +27,9 @@ pod:
     port:
         number: 80
         target: localhost-port
+    port_debug:
+        number: 9229
+        target: port-debug
     resources:
         enabled: false
         requests:
@@ -64,6 +67,7 @@ nginx:
         server_locations: 'construct[Values.nginx.paths.nginx_dir_path, /locations.conf]'
         mime_types: 'construct[Values.nginx.paths.dir_path, /mime.types]'
         pid: /run/nginx.pid
+        stream: 'construct[Values.nginx.paths.nginx_dir_path, /stream.conf]'
     types:
         default: application/octet-stream
     server:
@@ -73,6 +77,7 @@ nginx:
         locations:
             - path: /
               proxy_pass: 'construct[Values.services.nginx.protocol, ://, Values.services.nginx.serviceName, ., Values.services.nginx.namespace, ., svc.cluster.local:, Values.services.nginx.port]'
+              proxy_pass_debug: 'construct[Values.services.nginx.serviceName, ., Values.services.nginx.namespace, ., svc.cluster.local:, Values.services.nginx.port_debug]'
               proxy_set_headers:
                   - Host $host
                   - X-Real-IP $remote_addr

@@ -7,8 +7,11 @@ spec:
     # prettier-ignore
     selector: {{- include "global.commonMetadata" . | nindent 8 }}
     ports:
+        - name: http
+          protocol: TCP
           # prettier-ignore
-        - port: {{ .Values.pod.port.number }}
+          port: {{ .Values.pod.port.number }}
           # prettier-ignore
           targetPort: {{ trunc 15 .Values.pod.port.target | lower | quote }}
+
     type: LoadBalancer

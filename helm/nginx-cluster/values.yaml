@@ -4,7 +4,7 @@ appName: nginx-app
 # Namespace
 namespace: nginx-app-ns
 
-configMapName: localhost-config
+configMapName: nginx-config
 
 # Replicas
 replicas: 3
@@ -23,7 +23,7 @@ labels:
 # Pod Settings
 pod:
     image: nginx:stable-perl
-    containerName: localhost-container
+    containerName: nginx-container
     port:
         number: 80
         target: nginx-port
@@ -45,9 +45,9 @@ service:
 services:
     app:
         protocol: 'http'
-        name: 'app-service'
+        serviceName: 'app-service'
         namespace: 'authentication-app'
-        port: 3000
+        port: 80
 
 nginx:
     settings:
@@ -64,14 +64,17 @@ nginx:
         server_locations: 'construct[Values.nginx.paths.nginx_dir_path, /locations.conf]'
         mime_types: 'construct[Values.nginx.paths.dir_path, /mime.types]'
         pid: /run/nginx.pid
+        stream: 'construct[Values.nginx.paths.nginx_dir_path, /stream.conf]'
     types:
         default: application/octet-stream
     server:
         ports:
             - 80
+            - 9229
         locations:
             - path: /
-              proxy_pass: 'construct[Values.services.app.protocol, ://, Values.services.app.name, ., Values.services.app.namespace, ., svc.cluster.local:, Values.services.app.port]'
+              proxy_pass: 'construct[Values.services.app.protocol, ://, Values.services.app.serviceName, ., Values.services.app.namespace, ., svc.cluster.local:, Values.services.app.port]'
+              proxy_pass_debug: 'construct[Values.services.app.serviceName, ., Values.services.app.namespace, ., svc.cluster.local:, Values.services.app.port_debug]'
               proxy_set_headers:
                   - Host $host
                   - X-Real-IP $remote_addr

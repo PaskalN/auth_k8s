@@ -19,7 +19,7 @@ install_helm_localhost() {
     SUCCESS=false
 
     until $SUCCESS || [ $ATTEMPT -gt $MAX_ATTEMPTS ]; do
-        echo "Attempt $ATTEMPT of $MAX_ATTEMPTS to install MongoDB..."
+        echo "Attempt $ATTEMPT of $MAX_ATTEMPTS to install Localhost Nginx..."
         if $HELM_COMMAND; then
             print_green "Localhost Nginx started successfully!"
             SUCCESS=true
