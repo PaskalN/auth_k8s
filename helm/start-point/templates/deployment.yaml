@@ -1,0 +1,96 @@
+# prettier-ignore-start
+{{- $ := . }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: {{.Values.appName | quote}}
+    namespace: {{.Values.namespace}}
+spec:
+    replicas: {{.Values.replicas}}
+    selector:
+        matchLabels:
+        {{- include "global.commonMetadata" $ | nindent 12}}
+    template:
+        metadata:
+            labels: 
+            {{- include "global.commonMetadata" $ | nindent 16}}
+        spec:
+            # terminationGracePeriodSeconds: 180
+            # imagePullPolicy: Never
+            
+            volumes:
+                - name: app-code
+                  hostPath:
+                    path: /host_mnt/home/n-ministation/Documents/Incubator/NodeJS/StartPoint
+                    type: Directory
+                
+            containers:
+                - name: {{.Values.pod.containerName}}
+                  image: {{.Values.pod.image}}
+                  imagePullPolicy: IfNotPresent
+
+                  ports:
+                    - containerPort: {{ .Values.pod.port.number }}
+                      name: {{  trunc 15 .Values.pod.port.target | lower | quote }}
+
+                    {{- if .Values.pod.port_debug.enabled }}
+                    - containerPort: {{ .Values.pod.port_debug.number }}
+                      name: {{  trunc 15 .Values.pod.port_debug.target | lower | quote }}
+                    {{- end}}
+
+                  volumeMounts:
+                      - mountPath: /app
+                        name: app-code
+                  
+                  env:
+                      {{- if .Values.pod.port_debug.enabled }}
+                      - name: DEBUG
+                        value: "true"
+                      {{- end}}
+
+                      - name: REPLICAS
+                        value: {{.Values.replicas | quote}}
+
+                      - name: POD_NAME_INDEX
+                        valueFrom:
+                            fieldRef:
+                                fieldPath: metadata.name
+
+                      - name: BROKER_DNS
+                        value: {{include "dns.generator" (dict "root" $ "object" $.Values.services.kafka) | nospace }}
+
+                      - name: KAFKA_CLIENT_ID
+                        value: {{$.Values.services.kafka.client_id}}
+
+
+                      - name: REDIS_DNS
+                        value: {{include "dns.generator" (dict "root" $ "object" $.Values.services.redis) | nospace }}
+
+                      - name: MONGODB_DNS
+                        value: {{include "dns.generator" (dict "root" $ "object" $.Values.services.mongodb) | nospace }}
+
+                      - name: MONGODB_USER
+                        valueFrom:
+                            secretKeyRef:
+                                name: start-point-secrets
+                                key: mongodb_db_user
+
+                      - name: MONGODB_SECRET
+                        valueFrom:
+                            secretKeyRef:
+                                name: start-point-secrets
+                                key: mongodb_db_secret
+
+                      - name: MONGODB_REPLICASET
+                        value: {{$.Values.services.mongodb.replicaSet}}                               
+
+                  {{- if .Values.pod.resources.enabled -}}
+                  resources:
+                      requests:
+                          memory: {{ default "2Gi" .Values.pod.resources.requests.memory | quote }}
+                          cpu: {{ default "1" .Values.pod.resources.requests.cpu | quote }}
+                      limits:
+                          memory: {{ default "4Gi" .Values.pod.resources.limits.memory | quote }}
+                          cpu: {{ default "2" .Values.pod.resources.limits.cpu | quote }}
+                  {{end}}
+# prettier-ignore-end

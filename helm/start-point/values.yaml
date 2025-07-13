@@ -1,0 +1,73 @@
+# Names
+appName: app-node
+configMapName: app-init-scripts
+
+# Namespace
+namespace: authentication-app
+
+# Replicas
+replicas: 1
+
+# Service settings
+service: app-service
+
+# Services
+services:
+    # Brokers
+    kafka:
+        replicas: 3
+        pod_name: kafka-broker-node
+        service_name: kafka-service-broker
+        namespace: authentication-kafka-broker
+        port: 9093
+        client_id: KAFKA_BROKER_CLIENT_ID
+
+    redis:
+        replicas: 6
+        pod_name: redis-node
+        service_name: redis-service
+        namespace: authentication-redis
+        port: 6379
+
+    mongodb:
+        replicas: 3
+        pod_name: mongodb-node
+        service_name: mongodb-service-controller
+        namespace: authentication-mongodb
+        port: 27017
+        replicaSet: 'auth_rs'
+
+# Labels:
+labels:
+    custom:
+        app: 'Values.appName'
+
+    kubernetes:
+        io:
+            app: 'Values.appName'
+            component: db
+            instance: development
+
+# Pod Settings
+pod:
+    image: start-point
+    containerName: start-point-contaienr
+    port:
+        number: 3000
+        service_forward_number: 80
+        target: app-port
+        service_name: app-service
+    port_debug:
+        enabled: true
+        number: 9229
+        service_forward_number: 9229
+        target: app-debug
+        service_name: debug-service
+    resources:
+        enabled: false
+        requests:
+            cpu: '1'
+            memory: '2Gi'
+        limits:
+            cpu: '2'
+            memory: '4Gi'
