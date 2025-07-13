@@ -10,7 +10,7 @@ generate_secret_key() {
 }
 
 generate_base64_random_string() {
-    RAND=$(openssl rand -base64 16 | base64 | tr -d '\n')
+    RAND=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1 | base64 | tr -d '\n')
     echo "$RAND"
 }
 

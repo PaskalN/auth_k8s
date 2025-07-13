@@ -6,7 +6,7 @@ configMapName: app-init-scripts
 namespace: authentication-app
 
 # Replicas
-replicas: 1
+replicas: 3
 
 # Service settings
 service: app-service
@@ -58,7 +58,7 @@ pod:
         target: app-port
         service_name: app-service
     port_debug:
-        enabled: true
+        enabled: false
         number: 9229
         service_forward_number: 9229
         target: app-debug
