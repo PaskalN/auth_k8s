@@ -764,7 +764,7 @@ data:
 
         exec /opt/kafka/bin/kafka-server-start.sh "${USER_CONFIG_DIR}/server.properties"
     }
-  timestamp: "2025-07-12T19:16:29Z"
+  timestamp: "2025-07-13T14:52:36Z"
 kind: ConfigMap
 metadata:
   name: '{{ .Values.configMapName }}'
